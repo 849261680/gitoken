@@ -1,4 +1,4 @@
-# gitoken
+# TokenHeat
 
 Local CLI for collecting `Codex`, `Claude Code`, and `OpenCode` token usage from local data stores.
 
@@ -19,14 +19,14 @@ Local CLI for collecting `Codex`, `Claude Code`, and `OpenCode` token usage from
 ## Commands
 
 ```bash
-./gitoken collect
-./gitoken collect --provider codex
-./gitoken collect --provider opencode
-./gitoken report today
-./gitoken report daily --days 30
-./gitoken generate heatmap
-./gitoken sync github
-./gitoken sync github --profile-repo-dir ../849261680
+./tokenheat collect
+./tokenheat collect --provider codex
+./tokenheat collect --provider opencode
+./tokenheat report today
+./tokenheat report daily --days 30
+./tokenheat generate heatmap
+./tokenheat sync github
+./tokenheat sync github --profile-repo-dir ../849261680
 ```
 
 ## Storage
@@ -34,7 +34,7 @@ Local CLI for collecting `Codex`, `Claude Code`, and `OpenCode` token usage from
 SQLite database path:
 
 ```text
-~/.gitoken/gitoken.db
+~/.tokenheat/tokenheat.db
 ```
 
 ## Notes
@@ -52,9 +52,9 @@ SQLite database path:
 
 ## Generated artifacts
 
-- `./gitoken generate heatmap` writes:
+- `./tokenheat generate heatmap` writes:
   - `docs/usage.json`
   - `docs/heatmap.svg`
 - Default heatmap window is `365` days.
-- `./gitoken sync github` regenerates those files, commits them, and pushes to the current Git remote.
-- `./gitoken sync github --profile-repo-dir ../849261680` also copies `docs/heatmap.svg` into the profile repo and pushes that update.
+- `./tokenheat sync github` regenerates those files, commits them, and pushes to the current Git remote.
+- `./tokenheat sync github --profile-repo-dir ../849261680` also copies `docs/heatmap.svg` into the profile repo and pushes that update.

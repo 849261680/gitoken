@@ -180,13 +180,13 @@ func usageError() error {
 }
 
 func usageText() string {
-	return `gitoken
+	return `tokenheat
 
 Usage:
-  gitoken collect [--provider all|codex|claude|opencode] [--db PATH]
-  gitoken report today [--db PATH]
-  gitoken report daily [--days N] [--db PATH]
-  gitoken generate heatmap [--days N] [--output-dir DIR] [--db PATH]
-  gitoken sync github [--days N] [--output-dir DIR] [--repo-dir DIR] [--db PATH]
-  gitoken sync github [--profile-repo-dir DIR]`
+  tokenheat collect [--provider all|codex|claude|opencode] [--db PATH]
+  tokenheat report today [--db PATH]
+  tokenheat report daily [--days N] [--db PATH]
+  tokenheat generate heatmap [--days N] [--output-dir DIR] [--db PATH]
+  tokenheat sync github [--days N] [--output-dir DIR] [--repo-dir DIR] [--db PATH]
+  tokenheat sync github [--profile-repo-dir DIR]`
 }

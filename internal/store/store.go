@@ -22,7 +22,7 @@ func DefaultDBPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve home dir: %w", err)
 	}
-	return filepath.Join(home, ".gitoken", "gitoken.db"), nil
+	return filepath.Join(home, ".tokenheat", "tokenheat.db"), nil
 }
 
 func Open(path string) (*Store, error) {

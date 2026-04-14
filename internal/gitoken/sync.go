@@ -67,7 +67,7 @@ func generateArtifacts(opts generateOptions) error {
 	if err := exporter.WriteUsageJSON(jsonPath, export); err != nil {
 		return err
 	}
-	title := fmt.Sprintf("gitoken · %d-day Token Heatmap", opts.Days)
+	title := fmt.Sprintf("TokenHeat · %d-day Token Heatmap", opts.Days)
 	if err := exporter.WriteHeatmapSVG(svgPath, summaries, title); err != nil {
 		return err
 	}
@@ -260,8 +260,8 @@ func touchProfileReadme(repoDir string, now time.Time) error {
 		return fmt.Errorf("read profile README: %w", err)
 	}
 
-	const prefix = "<!-- gitoken-sync:"
-	stamp := fmt.Sprintf("<!-- gitoken-sync: %s -->", now.In(time.Local).Format(time.RFC3339))
+	const prefix = "<!-- tokenheat-sync:"
+	stamp := fmt.Sprintf("<!-- tokenheat-sync: %s -->", now.In(time.Local).Format(time.RFC3339))
 	content := string(data)
 
 	if idx := strings.Index(content, prefix); idx >= 0 {

@@ -2,6 +2,7 @@ example/
 
 # Local build output
 /gitoken
+/tokenheat
 
 # macOS
 .DS_Store
