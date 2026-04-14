@@ -23,7 +23,7 @@ func parseGenerateOptions(args []string) (generateOptions, error) {
 
 	opts := generateOptions{
 		DBPath:    dbPathDefault,
-		Days:      180,
+		Days:      365,
 		OutputDir: "docs",
 		Now:       timeNow(),
 	}

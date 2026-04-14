@@ -47,5 +47,6 @@ SQLite database path:
 - `./gitoken generate heatmap` writes:
   - `docs/usage.json`
   - `docs/heatmap.svg`
+- Default heatmap window is `365` days.
 - `./gitoken sync github` regenerates those files, commits them, and pushes to the current Git remote.
 - `./gitoken sync github --profile-repo-dir ../849261680` also copies `docs/heatmap.svg` into the profile repo and pushes that update.

@@ -109,7 +109,7 @@ func runSyncGitHub(args []string) error {
 	opts := syncOptions{
 		Generate: generateOptions{
 			DBPath:    dbPathDefault,
-			Days:      180,
+			Days:      365,
 			OutputDir: "docs",
 			Now:       time.Now(),
 		},

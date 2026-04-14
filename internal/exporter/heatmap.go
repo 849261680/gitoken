@@ -164,7 +164,7 @@ func buildHeatmapSVG(summaries []DailySummary, title string) string {
 	legendX := width - 150
 	legendY := height - 20
 	b.WriteString(fmt.Sprintf(`<text class="sub" x="%d" y="%d">Less</text>`, legendX-28, legendY+10))
-	legendLevels := []string{"#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"}
+	legendLevels := []string{"#ebedf0", "#c6dbef", "#6baed6", "#3182bd", "#08519c"}
 	for i, fill := range legendLevels {
 		x := legendX + i*(cell+4)
 		b.WriteString(fmt.Sprintf(`<rect x="%d" y="%d" width="%d" height="%d" rx="2" fill="%s"/>`, x, legendY, cell, cell, fill))
@@ -187,13 +187,13 @@ func heatColor(value int, max int) string {
 	ratio := float64(value) / float64(max)
 	switch {
 	case ratio < 0.25:
-		return "#9be9a8"
+		return "#c6dbef"
 	case ratio < 0.5:
-		return "#40c463"
+		return "#6baed6"
 	case ratio < 0.75:
-		return "#30a14e"
+		return "#3182bd"
 	default:
-		return "#216e39"
+		return "#08519c"
 	}
 }
 
