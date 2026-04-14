@@ -8,7 +8,7 @@ struct TokenHeatMenuApp: App {
         MenuBarExtra(viewModel.menuTitle, systemImage: "chart.bar.xaxis") {
             MenuBarContentView()
                 .environmentObject(viewModel)
-                .frame(width: 360)
+                .frame(width: 332)
         }
         .menuBarExtraStyle(.window)
     }

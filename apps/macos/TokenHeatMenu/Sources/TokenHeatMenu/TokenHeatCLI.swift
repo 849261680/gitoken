@@ -31,11 +31,11 @@ enum TokenHeatCLIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingCLI(let path):
-            return "Missing tokenheat CLI at \(path)"
+            return "找不到 tokenheat CLI：\(path)"
         case .commandFailed(let message):
             return message
         case .invalidResponse:
-            return "Failed to decode tokenheat output"
+            return "无法解析 tokenheat 的输出结果"
         }
     }
 }

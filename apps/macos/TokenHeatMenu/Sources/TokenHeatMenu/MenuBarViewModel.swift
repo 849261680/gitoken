@@ -10,7 +10,20 @@ final class MenuBarViewModel: ObservableObject {
         let totalTokens: Int
 
         var tokensText: String {
-            NumberFormatter.tokenFormatter.string(from: NSNumber(value: totalTokens)) ?? "\(totalTokens)"
+            compactTokenString(totalTokens)
+        }
+
+        var accentColor: Color {
+            switch id {
+            case "codex":
+                return Color(red: 0.12, green: 0.48, blue: 0.98)
+            case "claude":
+                return Color(red: 0.09, green: 0.67, blue: 0.56)
+            case "opencode":
+                return Color(red: 0.42, green: 0.39, blue: 0.95)
+            default:
+                return .accentColor
+            }
         }
     }
 
@@ -27,25 +40,31 @@ final class MenuBarViewModel: ObservableObject {
 
     var menuTitle: String {
         if totalTokens == 0 {
-            return "TH"
+            return "热图"
         }
-        return "TH \(compactTokenString(totalTokens))"
+        return "热图 \(compactTokenString(totalTokens))"
     }
 
     var totalSummary: String {
         if totalTokens == 0 {
-            return "No tokens today"
+            return "暂无数据"
         }
-        return "\(compactTokenString(totalTokens)) tokens today"
+        return compactTokenString(totalTokens)
     }
 
     var lastUpdatedSummary: String {
-        guard let lastUpdated else { return "Not refreshed yet" }
-        return "Updated \(RelativeDateTimeFormatter().localizedString(for: lastUpdated, relativeTo: Date()))"
+        guard let lastUpdated else { return "尚未刷新" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.localizedString(for: lastUpdated, relativeTo: Date())
     }
 
     var scheduleStatusText: String {
-        scheduleInstalled ? "Daily sync installed" : "Daily sync not installed"
+        scheduleInstalled ? "已开启" : "未开启"
+    }
+
+    var scheduleDetailText: String {
+        "00:05 自动同步"
     }
 
     func start() {
@@ -55,7 +74,7 @@ final class MenuBarViewModel: ObservableObject {
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(120))
-                await self?.refresh()
+                self?.refresh()
             }
         }
     }
@@ -92,32 +111,58 @@ final class MenuBarViewModel: ObservableObject {
 
     func syncNow() {
         runAction {
-            try await cli.runDaily()
+            try await self.cli.runDaily()
         }
     }
 
     func installSchedule() {
         runAction {
-            try await cli.installSchedule()
+            try await self.cli.installSchedule()
         }
     }
 
     func removeSchedule() {
         runAction {
-            try await cli.removeSchedule()
+            try await self.cli.removeSchedule()
         }
     }
 
-    func openProfile() {
-        open(urlString: cli.profileURLString)
+    func setScheduleEnabled(_ enabled: Bool) {
+        guard enabled != scheduleInstalled, !isRefreshing else { return }
+
+        let previous = scheduleInstalled
+        scheduleInstalled = enabled
+        isRefreshing = true
+        lastError = nil
+
+        Task {
+            do {
+                if enabled {
+                    try await self.cli.installSchedule()
+                } else {
+                    try await self.cli.removeSchedule()
+                }
+                isRefreshing = false
+                refresh()
+            } catch {
+                scheduleInstalled = previous
+                lastError = error.localizedDescription
+                isRefreshing = false
+            }
+        }
     }
 
-    func openProjectRepo() {
-        open(urlString: cli.projectURLString)
+    func openHeatmap() {
+        open(urlString: cli.profileURLString)
     }
 
     func quit() {
         NSApplication.shared.terminate(nil)
+    }
+
+    func share(for summary: ProviderSummary) -> Double {
+        guard totalTokens > 0 else { return 0 }
+        return Double(summary.totalTokens) / Double(totalTokens)
     }
 
     private func runAction(_ operation: @escaping () async throws -> Void) {
@@ -141,25 +186,18 @@ final class MenuBarViewModel: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
-    private func compactTokenString(_ value: Int) -> String {
-        let number = Double(value)
-        if number >= 1_000_000_000 {
-            return String(format: "%.1fB", number / 1_000_000_000)
-        }
-        if number >= 1_000_000 {
-            return String(format: "%.1fM", number / 1_000_000)
-        }
-        if number >= 1_000 {
-            return String(format: "%.1fK", number / 1_000)
-        }
-        return "\(value)"
-    }
 }
 
-private extension NumberFormatter {
-    static let tokenFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return formatter
-    }()
+private func compactTokenString(_ value: Int) -> String {
+    let number = Double(value)
+    if number >= 1_000_000_000 {
+        return String(format: "%.1fB", number / 1_000_000_000)
+    }
+    if number >= 1_000_000 {
+        return String(format: "%.1fM", number / 1_000_000)
+    }
+    if number >= 1_000 {
+        return String(format: "%.1fK", number / 1_000)
+    }
+    return "\(value)"
 }
