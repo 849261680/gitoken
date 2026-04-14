@@ -224,8 +224,11 @@ func syncProfileHeatmap(opts syncOptions, heatmapPath string) error {
 	if err := os.WriteFile(profileAssetPath, data, 0o644); err != nil {
 		return fmt.Errorf("write profile heatmap: %w", err)
 	}
+	if err := touchProfileReadme(opts.ProfileRepoDir, opts.Generate.Now); err != nil {
+		return err
+	}
 
-	if err := gitRun(opts.ProfileRepoDir, "add", opts.ProfileAsset); err != nil {
+	if err := gitRun(opts.ProfileRepoDir, "add", opts.ProfileAsset, "README.md"); err != nil {
 		return err
 	}
 
@@ -247,6 +250,34 @@ func syncProfileHeatmap(opts syncOptions, heatmapPath string) error {
 	}
 
 	fmt.Printf("synced %s to %s/%s\n", opts.ProfileAsset, opts.ProfileRemote, branch)
+	return nil
+}
+
+func touchProfileReadme(repoDir string, now time.Time) error {
+	path := filepath.Join(repoDir, "README.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read profile README: %w", err)
+	}
+
+	const prefix = "<!-- gitoken-sync:"
+	stamp := fmt.Sprintf("<!-- gitoken-sync: %s -->", now.In(time.Local).Format(time.RFC3339))
+	content := string(data)
+
+	if idx := strings.Index(content, prefix); idx >= 0 {
+		if end := strings.Index(content[idx:], "-->"); end >= 0 {
+			content = content[:idx] + stamp + content[idx+end+3:]
+		}
+	} else {
+		if !strings.HasSuffix(content, "\n") {
+			content += "\n"
+		}
+		content += "\n" + stamp + "\n"
+	}
+
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return fmt.Errorf("write profile README: %w", err)
+	}
 	return nil
 }
 
