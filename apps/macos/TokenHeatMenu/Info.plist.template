@@ -10,6 +10,8 @@
   <string>com.tokenheat.menu</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
+  <key>CFBundleIconFile</key>
+  <string>TokenHeat</string>
   <key>CFBundleName</key>
   <string>Token Heatmap</string>
   <key>CFBundlePackageType</key>

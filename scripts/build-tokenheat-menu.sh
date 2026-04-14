@@ -8,6 +8,7 @@ MACOS_DIR="$APP_DIR/Contents/MacOS"
 RESOURCES_DIR="$APP_DIR/Contents/Resources"
 INFO_PLIST="$APP_DIR/Contents/Info.plist"
 CLI_BINARY="$ROOT_DIR/tokenheat"
+ICON_FILE="$RESOURCES_DIR/TokenHeat.icns"
 PROFILE_REPO_DIR_DEFAULT="$ROOT_DIR/../849261680"
 PROFILE_REPO_DIR="${PROFILE_REPO_DIR:-$PROFILE_REPO_DIR_DEFAULT}"
 PROJECT_URL="${PROJECT_URL:-https://github.com/849261680/token-heatmap}"
@@ -27,6 +28,8 @@ fi
 
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
+
+"$ROOT_DIR/scripts/generate-tokenheat-icon.sh" "$ICON_FILE"
 
 python3 - <<'PY' "$ROOT_DIR/apps/macos/TokenHeatMenu/Info.plist.template" "$INFO_PLIST" "$RESOURCES_DIR/tokenheat" "$ROOT_DIR" "$PROFILE_REPO_DIR" "$PROJECT_URL" "$PROFILE_URL"
 from pathlib import Path
