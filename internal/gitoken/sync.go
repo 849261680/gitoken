@@ -67,7 +67,7 @@ func generateArtifacts(opts generateOptions) error {
 	if err := exporter.WriteUsageJSON(jsonPath, export); err != nil {
 		return err
 	}
-	title := fmt.Sprintf("TokenHeat · %d-day Token Heatmap", opts.Days)
+	title := fmt.Sprintf("Token Heatmap · %d-day Token Heatmap", opts.Days)
 	if err := exporter.WriteHeatmapSVG(svgPath, summaries, title); err != nil {
 		return err
 	}

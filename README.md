@@ -1,4 +1,4 @@
-# TokenHeat
+# Token Heatmap
 
 Local CLI for collecting `Codex`, `Claude Code`, and `OpenCode` token usage from local data stores.
 
