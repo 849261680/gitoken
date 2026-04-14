@@ -32,8 +32,12 @@ func Run(args []string) error {
 		return runReport(args[1:])
 	case "generate":
 		return runGenerate(args[1:])
+	case "run":
+		return runRun(args[1:])
 	case "sync":
 		return runSync(args[1:])
+	case "schedule":
+		return runSchedule(args[1:])
 	case "help", "-h", "--help":
 		return usageError()
 	default:
@@ -42,36 +46,14 @@ func Run(args []string) error {
 }
 
 func runCollect(args []string) error {
-	fs := flag.NewFlagSet("collect", flag.ContinueOnError)
-	fs.SetOutput(os.Stderr)
-
-	dbPathDefault, err := store.DefaultDBPath()
+	opts, err := parseCollectOptions(args)
 	if err != nil {
 		return err
 	}
-	dbPath := fs.String("db", dbPathDefault, "sqlite database path")
-	providerArg := fs.String("provider", "all", "codex|claude|all")
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	providers, err := parseProviders(*providerArg)
+	results, err := executeCollect(opts)
 	if err != nil {
 		return err
 	}
-
-	st, err := store.Open(*dbPath)
-	if err != nil {
-		return err
-	}
-	defer st.Close()
-
-	results, err := collector.ScanAll(context.Background(), st, providers)
-	if err != nil {
-		return err
-	}
-
 	var views []collectResultView
 	for _, result := range results {
 		views = append(views, collectResultView{
@@ -83,6 +65,47 @@ func runCollect(args []string) error {
 	}
 	printCollectResults(views)
 	return nil
+}
+
+type collectOptions struct {
+	DBPath    string
+	Providers []model.Provider
+}
+
+func parseCollectOptions(args []string) (collectOptions, error) {
+	dbPathDefault, err := store.DefaultDBPath()
+	if err != nil {
+		return collectOptions{}, err
+	}
+
+	opts := collectOptions{
+		DBPath: dbPathDefault,
+	}
+
+	fs := newFlagSet("collect")
+	dbPath := fs.String("db", opts.DBPath, "sqlite database path")
+	providerArg := fs.String("provider", "all", "all|codex|claude|opencode")
+	if err := fs.Parse(args); err != nil {
+		return collectOptions{}, err
+	}
+
+	providers, err := parseProviders(*providerArg)
+	if err != nil {
+		return collectOptions{}, err
+	}
+	opts.DBPath = *dbPath
+	opts.Providers = providers
+	return opts, nil
+}
+
+func executeCollect(opts collectOptions) ([]collector.CollectResult, error) {
+	st, err := store.Open(opts.DBPath)
+	if err != nil {
+		return nil, err
+	}
+	defer st.Close()
+
+	return collector.ScanAll(context.Background(), st, opts.Providers)
 }
 
 func runReport(args []string) error {
@@ -187,6 +210,10 @@ Usage:
   tokenheat report today [--db PATH]
   tokenheat report daily [--days N] [--db PATH]
   tokenheat generate heatmap [--days N] [--output-dir DIR] [--db PATH]
+  tokenheat run daily [--repo-dir DIR] [--profile-repo-dir DIR] [--days N] [--db PATH]
   tokenheat sync github [--days N] [--output-dir DIR] [--repo-dir DIR] [--db PATH]
-  tokenheat sync github [--profile-repo-dir DIR]`
+  tokenheat sync github [--profile-repo-dir DIR]
+  tokenheat schedule install [--time HH:MM] [--repo-dir DIR] [--profile-repo-dir DIR]
+  tokenheat schedule status
+  tokenheat schedule remove`
 }

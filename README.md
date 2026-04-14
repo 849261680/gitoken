@@ -25,8 +25,12 @@ Local CLI for collecting `Codex`, `Claude Code`, and `OpenCode` token usage from
 ./tokenheat report today
 ./tokenheat report daily --days 30
 ./tokenheat generate heatmap
+./tokenheat run daily --profile-repo-dir ../849261680
 ./tokenheat sync github
 ./tokenheat sync github --profile-repo-dir ../849261680
+./tokenheat schedule install --profile-repo-dir ../849261680
+./tokenheat schedule status
+./tokenheat schedule remove
 ```
 
 ## Storage
@@ -56,5 +60,13 @@ SQLite database path:
   - `docs/usage.json`
   - `docs/heatmap.svg`
 - Default heatmap window is `365` days.
+- `./tokenheat run daily` runs `collect` first, then regenerates and syncs GitHub artifacts.
 - `./tokenheat sync github` regenerates those files, commits them, and pushes to the current Git remote.
 - `./tokenheat sync github --profile-repo-dir ../849261680` also copies `docs/heatmap.svg` into the profile repo and pushes that update.
+
+## Scheduling
+
+- `./tokenheat schedule install --profile-repo-dir ../849261680` installs a macOS `launchd` job.
+- Default run time is local `00:05` every day.
+- The scheduled command is `tokenheat run daily`, so it performs `collect + sync`.
+- Logs are written to `~/.tokenheat/logs/`.
