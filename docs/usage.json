@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-15T01:01:48+08:00",
+  "generated_at": "2026-04-15T01:43:28+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
@@ -770,10 +770,8 @@
     },
     {
       "day": "2025-09-16",
-      "total_tokens": 4953,
-      "providers": {
-        "codex": 4953
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-09-17",
@@ -902,24 +900,18 @@
     },
     {
       "day": "2025-10-12",
-      "total_tokens": 20273,
-      "providers": {
-        "codex": 20273
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-13",
-      "total_tokens": 726265,
-      "providers": {
-        "codex": 726265
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-14",
-      "total_tokens": 4607511,
-      "providers": {
-        "codex": 4607511
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-15",
@@ -943,17 +935,13 @@
     },
     {
       "day": "2025-10-19",
-      "total_tokens": 1372125,
-      "providers": {
-        "codex": 1372125
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-20",
-      "total_tokens": 1745984,
-      "providers": {
-        "codex": 1745984
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-21",
@@ -987,17 +975,13 @@
     },
     {
       "day": "2025-10-27",
-      "total_tokens": 8227,
-      "providers": {
-        "codex": 8227
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-28",
-      "total_tokens": 2907720,
-      "providers": {
-        "codex": 2907720
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-10-29",
@@ -1021,10 +1005,8 @@
     },
     {
       "day": "2025-11-02",
-      "total_tokens": 3686557,
-      "providers": {
-        "codex": 3686557
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-03",
@@ -1068,24 +1050,18 @@
     },
     {
       "day": "2025-11-11",
-      "total_tokens": 28489419,
-      "providers": {
-        "codex": 28489419
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-12",
-      "total_tokens": 19199906,
-      "providers": {
-        "codex": 19199906
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-13",
-      "total_tokens": 6962791,
-      "providers": {
-        "codex": 6962791
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-14",
@@ -1104,17 +1080,13 @@
     },
     {
       "day": "2025-11-17",
-      "total_tokens": 11591158,
-      "providers": {
-        "codex": 11591158
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-18",
-      "total_tokens": 3531666,
-      "providers": {
-        "codex": 3531666
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-19",
@@ -1153,10 +1125,8 @@
     },
     {
       "day": "2025-11-26",
-      "total_tokens": 5943506,
-      "providers": {
-        "codex": 5943506
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-11-27",
@@ -1175,10 +1145,8 @@
     },
     {
       "day": "2025-11-30",
-      "total_tokens": 1011283,
-      "providers": {
-        "codex": 1011283
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-01",
@@ -1192,10 +1160,8 @@
     },
     {
       "day": "2025-12-03",
-      "total_tokens": 830594,
-      "providers": {
-        "codex": 830594
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-04",
@@ -1204,17 +1170,13 @@
     },
     {
       "day": "2025-12-05",
-      "total_tokens": 14194425,
-      "providers": {
-        "codex": 14194425
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-06",
-      "total_tokens": 19520801,
-      "providers": {
-        "codex": 19520801
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-07",
@@ -1253,10 +1215,8 @@
     },
     {
       "day": "2025-12-14",
-      "total_tokens": 119816,
-      "providers": {
-        "codex": 119816
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-15",
@@ -1270,17 +1230,13 @@
     },
     {
       "day": "2025-12-17",
-      "total_tokens": 6435,
-      "providers": {
-        "codex": 6435
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-18",
-      "total_tokens": 237240,
-      "providers": {
-        "codex": 237240
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-19",
@@ -1299,10 +1255,8 @@
     },
     {
       "day": "2025-12-22",
-      "total_tokens": 7561,
-      "providers": {
-        "codex": 7561
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2025-12-23",
@@ -1801,123 +1755,78 @@
     },
     {
       "day": "2026-04-01",
-      "total_tokens": 3189264,
-      "providers": {
-        "claude": 856103,
-        "codex": 2333161
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-02",
-      "total_tokens": 27668955,
-      "providers": {
-        "claude": 8878436,
-        "codex": 18790519
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-03",
-      "total_tokens": 15861247,
-      "providers": {
-        "claude": 970825,
-        "codex": 14890422
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-04",
-      "total_tokens": 839973,
-      "providers": {
-        "claude": 839973
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-05",
-      "total_tokens": 6661888,
-      "providers": {
-        "claude": 3908449,
-        "codex": 2753439
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-06",
-      "total_tokens": 83536353,
-      "providers": {
-        "claude": 47430032,
-        "codex": 36106321
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-07",
-      "total_tokens": 36955109,
-      "providers": {
-        "claude": 34520793,
-        "codex": 2434316
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-08",
-      "total_tokens": 127051894,
-      "providers": {
-        "claude": 21255302,
-        "codex": 105796592
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-09",
-      "total_tokens": 245338644,
-      "providers": {
-        "claude": 16914297,
-        "codex": 228424347
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-10",
-      "total_tokens": 40243879,
-      "providers": {
-        "claude": 1222772,
-        "codex": 39021107
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-11",
-      "total_tokens": 5162707,
-      "providers": {
-        "claude": 4471766,
-        "opencode": 690941
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-12",
-      "total_tokens": 161657313,
-      "providers": {
-        "claude": 33287461,
-        "codex": 128357281,
-        "opencode": 12571
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-13",
-      "total_tokens": 133586486,
-      "providers": {
-        "claude": 39087319,
-        "codex": 92173060,
-        "opencode": 2326107
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-14",
-      "total_tokens": 270183155,
-      "providers": {
-        "claude": 93486984,
-        "codex": 176696171
-      }
+      "total_tokens": 0,
+      "providers": {}
     },
     {
       "day": "2026-04-15",
-      "total_tokens": 73342094,
-      "providers": {
-        "codex": 73342094
-      }
+      "total_tokens": 0,
+      "providers": {}
     }
   ]
 }
