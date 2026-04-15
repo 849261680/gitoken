@@ -86,6 +86,7 @@ final class MenuBarViewModel: ObservableObject {
 
         Task {
             do {
+                try await cli.collect()
                 async let report = cli.todayReport()
                 async let scheduleInstalled = cli.scheduleInstalled()
                 let (rows, schedule) = try await (report, scheduleInstalled)

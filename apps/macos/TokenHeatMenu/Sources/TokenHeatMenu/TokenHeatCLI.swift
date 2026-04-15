@@ -49,14 +49,21 @@ struct TokenHeatCLI {
 
     init(bundle: Bundle = .main) {
         let resourcesPath = bundle.resourceURL?.appendingPathComponent("tokenheat").path
-        self.cliPath = bundle.object(forInfoDictionaryKey: "TokenHeatCLIPath") as? String
-            ?? resourcesPath
-            ?? "/usr/local/bin/tokenheat"
+        if let resourcesPath, FileManager.default.isExecutableFile(atPath: resourcesPath) {
+            self.cliPath = resourcesPath
+        } else {
+            self.cliPath = bundle.object(forInfoDictionaryKey: "TokenHeatCLIPath") as? String
+                ?? "/usr/local/bin/tokenheat"
+        }
         self.repoDir = bundle.object(forInfoDictionaryKey: "TokenHeatRepoDir") as? String
             ?? FileManager.default.currentDirectoryPath
         self.profileRepoDir = bundle.object(forInfoDictionaryKey: "TokenHeatProfileRepoDir") as? String
         self.profileURLString = bundle.object(forInfoDictionaryKey: "TokenHeatProfileURL") as? String
         self.projectURLString = bundle.object(forInfoDictionaryKey: "TokenHeatProjectURL") as? String
+    }
+
+    func collect() async throws {
+        _ = try await run(arguments: ["collect"])
     }
 
     func todayReport() async throws -> [TodayReportRow] {
