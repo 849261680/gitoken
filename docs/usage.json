@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T00:05:00+08:00",
+  "generated_at": "2026-04-17T01:08:49+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
@@ -1920,9 +1920,9 @@
     },
     {
       "day": "2026-04-17",
-      "total_tokens": 378942,
+      "total_tokens": 45548280,
       "providers": {
-        "codex": 378942
+        "codex": 45548280
       }
     }
   ]
