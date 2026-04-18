@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Token Heatmap — AI 编程用量热力图</title>
+  <meta name="description" content="把你的 AI 编程使用量转成 GitHub 风格的 Token 热力图。支持 Claude Code、Codex、OpenCode。" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #3E6AE1;
+      --carbon:     #171A20;
+      --graphite:   #393C41;
+      --pewter:     #5C5E62;
+      --fog:        #8E8E8E;
+      --cloud:      #EEEEEE;
+      --pale:       #D0D1D2;
+      --ash:        #F4F4F4;
+      --white:      #FFFFFF;
+      --ease:       cubic-bezier(0.5, 0, 0, 0.75);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, system-ui, Arial, sans-serif;
+      background: var(--white);
+      color: var(--graphite);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      background: var(--white);
+      transition: background 0.33s var(--ease), backdrop-filter 0.33s var(--ease);
+    }
+    nav.frosted {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .nav-wordmark {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: var(--carbon);
+      text-decoration: none;
+      text-transform: uppercase;
+      flex: 1;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--carbon);
+      text-decoration: none;
+      padding: 4px 16px;
+      border-radius: 4px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      transition: color 0.33s var(--ease), background-color 0.33s var(--ease);
+    }
+    .nav-link:hover { background: var(--ash); }
+    .nav-download-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--white);
+      background: var(--blue);
+      text-decoration: none;
+      padding: 4px 16px;
+      border-radius: 4px;
+      min-height: 32px;
+      border: 3px solid transparent;
+      transition: background-color 0.33s var(--ease), border-color 0.33s var(--ease);
+    }
+    .nav-download-btn:hover { background: #2d57c8; }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 8px;
+      background: none;
+      border: none;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 1.5px;
+      background: var(--carbon);
+      transition: transform 0.33s var(--ease), opacity 0.33s var(--ease);
+    }
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 56px; left: 0; right: 0;
+      background: var(--white);
+      padding: 16px 24px 24px;
+      z-index: 99;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--carbon);
+      text-decoration: none;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--cloud);
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      background: var(--carbon);
+      flex-direction: column;
+      padding: 80px 24px 40px;
+      text-align: center;
+    }
+    .hero-label {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--pewter);
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: 64px;
+      font-weight: 500;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .hero-subtitle {
+      font-size: 22px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.4;
+      margin-bottom: 40px;
+    }
+    .heatmap-wrapper {
+      width: 100%;
+      max-width: 880px;
+      margin: 0 auto 48px;
+      overflow-x: auto;
+    }
+    .heatmap-wrapper svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .btn-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--white);
+      background: var(--blue);
+      text-decoration: none;
+      border-radius: 4px;
+      min-height: 40px;
+      width: 200px;
+      border: 3px solid transparent;
+      transition: background-color 0.33s var(--ease), border-color 0.33s var(--ease);
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: #2d57c8; }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--graphite);
+      background: var(--white);
+      text-decoration: none;
+      border-radius: 4px;
+      min-height: 40px;
+      width: 200px;
+      border: 3px solid transparent;
+      transition: background-color 0.33s var(--ease), color 0.33s var(--ease);
+      cursor: pointer;
+    }
+    .btn-secondary:hover { background: var(--ash); }
+    .btn-secondary-dark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--carbon);
+      background: var(--white);
+      text-decoration: none;
+      border-radius: 4px;
+      min-height: 40px;
+      width: 200px;
+      border: 3px solid transparent;
+      transition: background-color 0.33s var(--ease);
+      cursor: pointer;
+    }
+    .btn-secondary-dark:hover { background: rgba(255,255,255,0.88); }
+
+    /* ── FEATURES ── */
+    #features {
+      background: var(--white);
+      flex-direction: column;
+      padding: 80px 24px;
+    }
+    .section-title {
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--carbon);
+      text-align: center;
+      margin-bottom: 80px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+      max-width: 960px;
+      width: 100%;
+    }
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      color: var(--carbon);
+    }
+    .feature-name {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--carbon);
+    }
+    .feature-desc {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--graphite);
+      line-height: 1.6;
+    }
+
+    /* ── SHOWCASE ── */
+    #showcase {
+      background: var(--ash);
+      padding: 80px 24px;
+      gap: 80px;
+    }
+    .showcase-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      max-width: 1100px;
+      width: 100%;
+      align-items: center;
+    }
+    .showcase-text { display: flex; flex-direction: column; gap: 24px; }
+    .showcase-label {
+      font-size: 14px;
+      color: var(--pewter);
+    }
+    .showcase-title {
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--carbon);
+      line-height: 1.2;
+    }
+    .showcase-body {
+      font-size: 14px;
+      color: var(--graphite);
+      line-height: 1.7;
+      max-width: 400px;
+    }
+    .showcase-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .showcase-bullets li {
+      font-size: 14px;
+      color: var(--graphite);
+    }
+
+    /* macOS mockup */
+    .macos-mockup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .menubar {
+      width: 340px;
+      height: 28px;
+      background: rgba(30,30,30,0.92);
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 12px;
+      gap: 16px;
+    }
+    .menubar-item {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+    }
+    .menubar-item.active {
+      font-size: 11px;
+      color: var(--white);
+      font-weight: 500;
+    }
+    .menubar-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #c6dbef;
+    }
+    .dropdown-panel {
+      width: 280px;
+      background: var(--white);
+      border-radius: 0 0 12px 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-self: flex-end;
+      margin-right: 30px;
+    }
+    .dropdown-header {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--pewter);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .stat-label { font-size: 13px; color: var(--graphite); }
+    .stat-value { font-size: 17px; font-weight: 500; color: var(--carbon); }
+    .mini-heatmap {
+      display: grid;
+      grid-template-columns: repeat(14, 10px);
+      grid-template-rows: repeat(7, 10px);
+      gap: 2px;
+      margin-top: 4px;
+    }
+    .mini-cell {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      background: #ebedf0;
+    }
+    .dropdown-footer {
+      font-size: 11px;
+      color: var(--fog);
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--cloud);
+    }
+
+    /* ── CLI ── */
+    #cli {
+      background: var(--white);
+      flex-direction: column;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .cli-subtitle {
+      font-size: 14px;
+      color: var(--graphite);
+      margin-bottom: 48px;
+      margin-top: 16px;
+    }
+    .code-block {
+      background: var(--ash);
+      border-radius: 4px;
+      padding: 32px 40px;
+      text-align: left;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 14px;
+      color: var(--graphite);
+      line-height: 2;
+      max-width: 480px;
+      width: 100%;
+      margin-bottom: 48px;
+    }
+    .code-block .cmd-prefix { color: var(--pewter); user-select: none; }
+    .code-block .cmd { color: var(--carbon); font-weight: 500; }
+    .code-block .cmd-arg { color: var(--blue); }
+
+    /* ── DOWNLOAD ── */
+    #download {
+      background: var(--carbon);
+      flex-direction: column;
+      padding: 80px 24px;
+      text-align: center;
+      gap: 0;
+    }
+    .download-label {
+      font-size: 14px;
+      color: var(--blue);
+      margin-bottom: 24px;
+    }
+    .download-title {
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+    .download-subtitle {
+      font-size: 22px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 16px;
+    }
+    .download-req {
+      font-size: 14px;
+      color: var(--pewter);
+      margin-bottom: 48px;
+    }
+    .download-btn-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--white);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--pewter);
+      border-top: 1px solid var(--cloud);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-label, .hero-title, .hero-subtitle, .heatmap-wrapper, .btn-row {
+      animation: fadeIn 0.6s var(--ease) both;
+    }
+    .hero-title     { animation-delay: 0.1s; }
+    .hero-subtitle  { animation-delay: 0.2s; }
+    .heatmap-wrapper{ animation-delay: 0.35s; }
+    .btn-row        { animation-delay: 0.5s; }
+
+    /* heatmap cell stagger */
+    .hm-cell { opacity: 0; animation: cellIn 0.3s var(--ease) forwards; }
+    @keyframes cellIn { to { opacity: 1; } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hamburger { display: flex; }
+      .nav-actions { display: none; }
+      .features-grid { grid-template-columns: 1fr; gap: 40px; }
+      .showcase-inner { grid-template-columns: 1fr; }
+      .macos-mockup { display: none; }
+      .hero-title { font-size: 28px; }
+      .hero-subtitle { font-size: 18px; }
+      .section-title { font-size: 28px; }
+      .showcase-title { font-size: 28px; }
+      .download-title { font-size: 28px; }
+      .download-subtitle { font-size: 18px; }
+      .btn-primary, .btn-secondary, .btn-secondary-dark { width: 100%; max-width: 320px; }
+      .btn-row { flex-direction: column; align-items: center; }
+      .download-btn-row { flex-direction: column; align-items: center; }
+      #showcase { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-wordmark">Token Heatmap</a>
+  <div class="nav-actions">
+    <a href="https://github.com/849261680/token-heatmap" target="_blank" class="nav-link">GitHub</a>
+    <a href="Token Heatmap.zip" download="Token Heatmap.zip" class="nav-download-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      下载
+    </a>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="菜单">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="https://github.com/849261680/token-heatmap" target="_blank">GitHub</a>
+  <a href="Token Heatmap.zip" download="Token Heatmap.zip">下载 macOS 应用</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+<h1 class="hero-title">Token Heatmap</h1>
+  <p class="hero-subtitle">把你的 AI 编程使用量<br>转成 GitHub 风格的热力图</p>
+
+  <div class="heatmap-wrapper" id="heatmapWrapper">
+    <!-- heatmap generated by JS below -->
+  </div>
+
+  <div class="btn-row">
+    <a href="Token Heatmap.zip" download="Token Heatmap.zip" class="btn-primary">下载 macOS 应用</a>
+    <a href="https://github.com/849261680/token-heatmap" target="_blank" class="btn-secondary">查看 GitHub</a>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <h2 class="section-title">全面追踪，精准呈现</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="6" y="8" width="28" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="6" y="20" width="28" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="11" cy="12" r="1.5" fill="currentColor"/>
+        <circle cx="11" cy="24" r="1.5" fill="currentColor"/>
+        <path d="M16 12h14M16 24h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div class="feature-name">多源采集</div>
+      <p class="feature-desc">支持 Claude Code、Codex、OpenCode 三大平台，自动扫描本地会话记录，写入统一数据库。</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect x="5" y="15" width="6" height="18" rx="1" fill="currentColor" opacity="0.25"/>
+        <rect x="13" y="10" width="6" height="23" rx="1" fill="currentColor" opacity="0.5"/>
+        <rect x="21" y="5" width="6" height="28" rx="1" fill="currentColor" opacity="0.75"/>
+        <rect x="29" y="18" width="6" height="15" rx="1" fill="currentColor" opacity="0.4"/>
+        <path d="M4 35h33" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <div class="feature-name">热力图生成</div>
+      <p class="feature-desc">生成最近 365 天的 GitHub 风格热力图，可导出 SVG 与 JSON，轻松嵌入 README 或个人主页。</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M8 20a12 12 0 0 1 20.5-8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M32 20a12 12 0 0 1-20.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M28.5 7l0.5 4.5-4.5 0.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M11.5 33l-0.5-4.5 4.5-0.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="feature-name">自动同步</div>
+      <p class="feature-desc">同步至 GitHub 个人主页仓库，支持 macOS launchd 每日自动执行，数据始终保持最新。</p>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<section id="showcase">
+  <div class="showcase-inner">
+    <div class="showcase-text">
+      <p class="showcase-label">菜单栏应用</p>
+      <h2 class="showcase-title">始终在线<br>随时查看</h2>
+      <p class="showcase-body">Token Heatmap 菜单栏应用常驻于 macOS 菜单栏，随时查看今日 Token 用量，无需打开终端。</p>
+      <ul class="showcase-bullets">
+        <li>— 今日用量一览</li>
+        <li>— 自动后台采集</li>
+      </ul>
+    </div>
+
+    <!-- macOS mockup -->
+    <div class="macos-mockup">
+      <div class="menubar">
+        <span class="menubar-item">Fri 10:24</span>
+        <span class="menubar-item">Wi-Fi</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="menubar-dot"></div>
+          <span class="menubar-item active">TH</span>
+        </div>
+      </div>
+      <div class="dropdown-panel">
+        <div class="dropdown-header">Token Heatmap</div>
+        <div class="stat-row">
+          <span class="stat-label">今日用量</span>
+          <span class="stat-value">1.9M</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">本周合计</span>
+          <span class="stat-value">2.8B</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">来源</span>
+          <span class="stat-label" style="color:var(--carbon)">Claude Code</span>
+        </div>
+        <div class="mini-heatmap" id="miniHeatmap"></div>
+        <div class="dropdown-footer">上次采集：刚刚</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLI -->
+<section id="cli">
+  <h2 class="section-title">命令行工具</h2>
+  <p class="cli-subtitle">简单几条命令，掌控全局</p>
+  <div class="code-block">
+    <div><span class="cmd-prefix">$ </span><span class="cmd">./tokenheat</span> <span class="cmd-arg">collect</span></div>
+    <div><span class="cmd-prefix">$ </span><span class="cmd">./tokenheat</span> <span class="cmd-arg">report today</span></div>
+    <div><span class="cmd-prefix">$ </span><span class="cmd">./tokenheat</span> <span class="cmd-arg">generate heatmap</span></div>
+    <div><span class="cmd-prefix">$ </span><span class="cmd">./tokenheat</span> <span class="cmd-arg">sync github</span></div>
+    <div><span class="cmd-prefix">$ </span><span class="cmd">./tokenheat</span> <span class="cmd-arg">schedule install</span></div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download">
+  <p class="download-label">免费开源</p>
+  <h2 class="download-title">立即开始追踪</h2>
+  <p class="download-subtitle">支持 Claude Code · Codex · OpenCode</p>
+  <p class="download-req">需要 macOS · 完整 Xcode</p>
+  <div class="download-btn-row">
+    <a href="Token Heatmap.zip" download="Token Heatmap.zip" class="btn-primary">下载 Token Heatmap</a>
+    <a href="https://github.com/849261680/token-heatmap" target="_blank" class="btn-secondary-dark">查看源码</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Token Heatmap · MIT License · 2025
+</footer>
+
+<script>
+  // ── Nav frosted glass on scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('frosted', window.scrollY > 10);
+  });
+
+  // ── Hamburger menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.toggle('open');
+  });
+
+  // ── Build hero heatmap SVG
+  (function buildHeatmap() {
+    const COLS = 53, ROWS = 7;
+    const CW = 13, CH = 13, GAP = 2;
+    const LEFT_PAD = 28, TOP_PAD = 20, BOTTOM_PAD = 40;
+    const W = LEFT_PAD + COLS * (CW + GAP) + 8;
+    const H = TOP_PAD + ROWS * (CH + GAP) + BOTTOM_PAD;
+
+    // Colour scale (dark-on-dark friendly)
+    const LEVELS = ['#2d3139','#1e3a5f','#1a5276','#1565c0','#0d47a1','#3E6AE1'];
+
+    // Simulate realistic data: sparse early, heavy recent
+    const totalCells = COLS * ROWS;
+    const data = [];
+    for (let i = 0; i < totalCells; i++) {
+      const progress = i / totalCells; // 0 = oldest, 1 = newest
+      let level = 0;
+      const r = Math.random();
+      if (progress < 0.5) {
+        level = r < 0.05 ? 1 : 0;
+      } else if (progress < 0.75) {
+        level = r < 0.15 ? (r < 0.05 ? 2 : 1) : 0;
+      } else if (progress < 0.88) {
+        level = r < 0.35 ? Math.ceil(r * 8) % 4 + 1 : 0;
+      } else {
+        // recent — heavy
+        if (r < 0.7) level = Math.floor(r * 5) + 1;
+      }
+      if (level > 5) level = 5;
+      data.push(level);
+    }
+    // Spike on col 50+ to mimic the real data's dark peak
+    for (let row = 0; row < 7; row++) {
+      data[50 * 7 + row] = 5;
+      data[51 * 7 + row] = Math.floor(Math.random() * 2) + 4;
+      data[52 * 7 + row] = Math.floor(Math.random() * 2) + 3;
+    }
+
+    // Month labels
+    const months = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+    const monthCols = [0, 4, 8, 13, 17, 22, 26, 30, 35, 39, 43, 48, 52];
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%">`;
+    svg += `<style>.hl{font:11px -apple-system,system-ui,Arial,sans-serif;fill:#5C5E62}.hlt{fill:#8E8E8E}</style>`;
+
+    // Day labels
+    const days = ['','Mon','','Wed','','Fri',''];
+    days.forEach((d, i) => {
+      if (!d) return;
+      const y = TOP_PAD + i * (CH + GAP) + CH - 1;
+      svg += `<text class="hl" x="0" y="${y}">${d}</text>`;
+    });
+
+    // Month labels
+    months.forEach((m, mi) => {
+      const col = monthCols[mi];
+      const x = LEFT_PAD + col * (CW + GAP);
+      svg += `<text class="hl" x="${x}" y="${TOP_PAD - 6}">${m}</text>`;
+    });
+
+    // Cells with stagger animation
+    let delay = 0;
+    for (let col = 0; col < COLS; col++) {
+      for (let row = 0; row < ROWS; row++) {
+        const idx = col * ROWS + row;
+        const level = data[idx] || 0;
+        const fill = LEVELS[level];
+        const x = LEFT_PAD + col * (CW + GAP);
+        const y = TOP_PAD + row * (CH + GAP);
+        const d = (delay * 4).toFixed(0);
+        svg += `<rect class="hm-cell" x="${x}" y="${y}" width="${CW}" height="${CH}" rx="2" fill="${fill}" style="animation-delay:${d}ms"/>`;
+        delay++;
+      }
+    }
+
+    // Legend
+    const LX = W - 6 * 16 - 40, LY = H - 14;
+    svg += `<text class="hlt" x="${LX - 28}" y="${LY}">Less</text>`;
+    LEVELS.forEach((c, i) => {
+      svg += `<rect x="${LX + i * 16}" y="${LY - 11}" width="${CW}" height="${CH}" rx="2" fill="${c}"/>`;
+    });
+    svg += `<text class="hlt" x="${LX + 6 * 16 + 4}" y="${LY}">More</text>`;
+
+    svg += '</svg>';
+
+    document.getElementById('heatmapWrapper').innerHTML = svg;
+  })();
+
+  // ── Mini heatmap in mockup
+  (function buildMini() {
+    const el = document.getElementById('miniHeatmap');
+    if (!el) return;
+    const LEVELS = ['#ebedf0','#c6dbef','#6baed6','#3182bd','#08519c'];
+    const totalMini = 14 * 7;
+    for (let i = 0; i < totalMini; i++) {
+      const progress = i / totalMini;
+      const r = Math.random();
+      let level = 0;
+      if (progress > 0.7) level = r < 0.6 ? Math.ceil(r * 4) : 0;
+      const div = document.createElement('div');
+      div.className = 'mini-cell';
+      div.style.background = LEVELS[Math.min(level, 4)];
+      el.appendChild(div);
+    }
+  })();
+</script>
+</body>
+</html>
