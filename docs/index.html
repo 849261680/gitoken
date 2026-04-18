@@ -656,7 +656,7 @@
   <p class="download-label">免费开源</p>
   <h2 class="download-title">立即开始追踪</h2>
   <p class="download-subtitle">支持 Claude Code · Codex · OpenCode</p>
-  <p class="download-req">需要 macOS · 完整 Xcode</p>
+
   <div class="download-btn-row">
     <a href="Token Heatmap.zip" download="Token Heatmap.zip" class="btn-primary">下载 Token Heatmap</a>
     <a href="https://github.com/849261680/token-heatmap" target="_blank" class="btn-secondary-dark">查看源码</a>
@@ -770,22 +770,32 @@
     document.getElementById('heatmapWrapper').innerHTML = svg;
   })();
 
-  // ── Mini heatmap in mockup
+  // ── Mini heatmap in mockup (column-major: 14 cols = weeks, 7 rows = days)
   (function buildMini() {
     const el = document.getElementById('miniHeatmap');
     if (!el) return;
     const LEVELS = ['#ebedf0','#c6dbef','#6baed6','#3182bd','#08519c'];
-    const totalMini = 14 * 7;
-    for (let i = 0; i < totalMini; i++) {
-      const progress = i / totalMini;
-      const r = Math.random();
-      let level = 0;
-      if (progress > 0.7) level = r < 0.6 ? Math.ceil(r * 4) : 0;
+    const COLS = 14, ROWS = 7;
+    // Build column-major data: col 0 = oldest, col 13 = newest
+    const cells = Array.from({length: COLS * ROWS});
+    for (let col = 0; col < COLS; col++) {
+      const progress = col / (COLS - 1); // 0=oldest, 1=newest
+      for (let row = 0; row < ROWS; row++) {
+        const r = Math.random();
+        let level = 0;
+        if (progress < 0.4)      level = r < 0.08 ? 1 : 0;
+        else if (progress < 0.7) level = r < 0.25 ? (r < 0.1 ? 2 : 1) : 0;
+        else if (progress < 0.9) level = r < 0.55 ? Math.ceil(r * 6) % 3 + 1 : 0;
+        else                     level = r < 0.75 ? Math.floor(r * 5) + 1 : 1;
+        cells[row * COLS + col] = Math.min(level, 4);
+      }
+    }
+    cells.forEach(level => {
       const div = document.createElement('div');
       div.className = 'mini-cell';
-      div.style.background = LEVELS[Math.min(level, 4)];
+      div.style.background = LEVELS[level];
       el.appendChild(div);
-    }
+    });
   })();
 </script>
 </body>
