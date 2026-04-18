@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/docs/index.html"
+    },
+    {
+      "src": "/heatmap.svg",
+      "dest": "/docs/heatmap.svg"
+    },
+    {
+      "src": "/usage.json",
+      "dest": "/docs/usage.json"
+    },
+    {
+      "src": "^/Token(?:%20| )Heatmap\\.zip$",
+      "dest": "/docs/Token Heatmap.zip"
+    }
+  ]
+}
