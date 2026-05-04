@@ -1,13 +1,8 @@
 {
-  "generated_at": "2026-05-04T00:05:00+08:00",
+  "generated_at": "2026-05-05T00:05:00+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
-    {
-      "day": "2025-05-05",
-      "total_tokens": 0,
-      "providers": {}
-    },
     {
       "day": "2025-05-06",
       "total_tokens": 0,
@@ -1957,6 +1952,13 @@
     },
     {
       "day": "2026-05-04",
+      "total_tokens": 47085515,
+      "providers": {
+        "codex": 47085515
+      }
+    },
+    {
+      "day": "2026-05-05",
       "total_tokens": 0,
       "providers": {}
     }
