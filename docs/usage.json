@@ -1,13 +1,8 @@
 {
-  "generated_at": "2026-05-05T21:32:22+08:00",
+  "generated_at": "2026-05-06T04:20:59+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
-    {
-      "day": "2025-05-06",
-      "total_tokens": 0,
-      "providers": {}
-    },
     {
       "day": "2025-05-07",
       "total_tokens": 0,
@@ -1727,9 +1722,9 @@
     },
     {
       "day": "2026-04-05",
-      "total_tokens": 6527671,
+      "total_tokens": 3218910,
       "providers": {
-        "claude": 3774232,
+        "claude": 465471,
         "codex": 2753439
       }
     },
@@ -1954,10 +1949,18 @@
     },
     {
       "day": "2026-05-05",
-      "total_tokens": 73381069,
+      "total_tokens": 129718653,
       "providers": {
-        "claude": 31204074,
-        "codex": 42176995
+        "claude": 58312624,
+        "codex": 71406029
+      }
+    },
+    {
+      "day": "2026-05-06",
+      "total_tokens": 91349666,
+      "providers": {
+        "claude": 65268027,
+        "codex": 26081639
       }
     }
   ]
