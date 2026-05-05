@@ -16,12 +16,14 @@ xcrun swift - "$SOURCE_PNG" <<'SWIFT'
 import AppKit
 
 let outputPath = CommandLine.arguments[1]
-let size: CGFloat = 1024
+let canvas: CGFloat = 1024
+let padding: CGFloat = canvas * 0.098
+let size = canvas - padding * 2
 
-let image = NSImage(size: NSSize(width: size, height: size))
+let image = NSImage(size: NSSize(width: canvas, height: canvas))
 image.lockFocus()
 
-let bounds = NSRect(x: 0, y: 0, width: size, height: size)
+let bounds = NSRect(x: padding, y: padding, width: size, height: size)
 let background = NSBezierPath(roundedRect: bounds, xRadius: size * 0.22, yRadius: size * 0.22)
 NSColor(calibratedWhite: 0.96, alpha: 1).setFill()
 background.fill()
