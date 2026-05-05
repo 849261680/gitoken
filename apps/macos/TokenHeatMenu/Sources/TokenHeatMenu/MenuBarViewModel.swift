@@ -39,6 +39,7 @@ final class MenuBarViewModel: ObservableObject {
     private let cli = TokenHeatCLI()
     private var didStart = false
     private var refreshTask: Task<Void, Never>?
+    var settings = SettingsStore()
 
     var menuTitle: String {
         todayTokens == 0 ? "热图" : "热图 \(compactTokenString(todayTokens))"
@@ -63,9 +64,19 @@ final class MenuBarViewModel: ObservableObject {
         guard !didStart else { return }
         didStart = true
         refresh()
+        startRefreshLoop()
+    }
+
+    func restartRefreshLoop() {
+        refreshTask?.cancel()
+        startRefreshLoop()
+    }
+
+    private func startRefreshLoop() {
+        let interval = settings.refreshInterval
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(120))
+                try? await Task.sleep(for: .seconds(interval))
                 self?.refresh()
             }
         }

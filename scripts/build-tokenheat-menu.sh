@@ -53,7 +53,9 @@ swiftc \
   -target "$(uname -m)-apple-macos13.0" \
   -framework SwiftUI \
   -framework AppKit \
+  -framework ServiceManagement \
   "$ROOT_DIR/apps/macos/TokenHeatMenu/Sources/TokenHeatMenu/TokenHeatCLI.swift" \
+  "$ROOT_DIR/apps/macos/TokenHeatMenu/Sources/TokenHeatMenu/SettingsStore.swift" \
   "$ROOT_DIR/apps/macos/TokenHeatMenu/Sources/TokenHeatMenu/MenuBarViewModel.swift" \
   "$ROOT_DIR/apps/macos/TokenHeatMenu/Sources/TokenHeatMenu/MenuBarContentView.swift" \
   "$ROOT_DIR/apps/macos/TokenHeatMenu/Sources/TokenHeatMenu/TokenHeatMenuApp.swift" \

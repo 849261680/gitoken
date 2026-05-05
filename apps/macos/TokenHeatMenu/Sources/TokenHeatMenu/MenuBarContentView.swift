@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @EnvironmentObject private var viewModel: MenuBarViewModel
+    @State private var showSettings = false
 
     private let levelColors: [Color] = [
         Color(red: 0.84, green: 0.87, blue: 0.90), // 0 empty
@@ -71,8 +72,12 @@ struct MenuBarContentView: View {
                 set: { viewModel.setScheduleEnabled($0) }
             ))
             Divider()
+            Button("设置...") { showSettings = true }
             Button("查看热力图", action: viewModel.openHeatmap)
             Button("退出", action: viewModel.quit)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet(viewModel: viewModel)
         }
     }
 
@@ -112,6 +117,60 @@ struct MenuBarContentView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Settings
+
+private struct SettingsSheet: View {
+    @ObservedObject var viewModel: MenuBarViewModel
+    @State private var selectedInterval: Int = 120
+    @State private var launchAtLogin: Bool = false
+
+    private let intervals: [(label: String, seconds: Int)] = [
+        ("1 分钟", 60),
+        ("2 分钟", 120),
+        ("5 分钟", 300),
+        ("10 分钟", 600),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("设置")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.primary)
+
+            HStack {
+                Text("开机自启")
+                    .font(.system(size: 13))
+                Spacer()
+                Toggle("", isOn: $launchAtLogin)
+                    .toggleStyle(.switch)
+                    .onChange(of: launchAtLogin) { viewModel.settings.updateLaunchAtLogin($0) }
+            }
+
+            HStack {
+                Text("刷新频率")
+                    .font(.system(size: 13))
+                Spacer()
+                Picker("", selection: $selectedInterval) {
+                    ForEach(intervals, id: \.seconds) { item in
+                        Text(item.label).tag(item.seconds)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: selectedInterval) {
+                    viewModel.settings.refreshInterval = $0
+                    viewModel.restartRefreshLoop()
+                }
+            }
+        }
+        .padding(20)
+        .frame(width: 260)
+        .onAppear {
+            selectedInterval = viewModel.settings.refreshInterval
+            launchAtLogin = viewModel.settings.launchAtLogin
         }
     }
 }
