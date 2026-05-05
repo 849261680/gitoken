@@ -53,13 +53,6 @@ final class MenuBarViewModel: ObservableObject {
         weeklyTokens == 0 ? "暂无数据" : compactTokenString(weeklyTokens)
     }
 
-    var lastUpdatedSummary: String {
-        guard let lastUpdated else { return "尚未刷新" }
-        let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        return f.localizedString(for: lastUpdated, relativeTo: Date())
-    }
-
     func start() {
         guard !didStart else { return }
         didStart = true
@@ -146,7 +139,7 @@ final class MenuBarViewModel: ObservableObject {
         lastError = nil
         Task {
             do {
-                if enabled { try await cli.installSchedule() }
+                if enabled { try await cli.installSchedule(time: settings.syncTimeString) }
                 else        { try await cli.removeSchedule() }
                 isRefreshing = false
                 refresh()
@@ -158,12 +151,78 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func setScheduleTime(_ date: Date) {
+        settings.updateSyncTime(date)
+        guard scheduleInstalled, !isRefreshing else { return }
+        isRefreshing = true
+        lastError = nil
+        Task {
+            do {
+                try await cli.installSchedule(time: settings.syncTimeString)
+                isRefreshing = false
+                refresh()
+            } catch {
+                lastError = error.localizedDescription
+                isRefreshing = false
+            }
+        }
+    }
+
+    private var settingsWindow: NSWindow?
+
+    func openSettings() {
+        if let existing = settingsWindow {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let view = NSHostingView(rootView: SettingsView()
+            .environmentObject(settings)
+            .environmentObject(self))
+        view.frame = NSRect(x: 0, y: 0, width: 300, height: 220)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 300, height: 220),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "设置"
+        window.contentView = view
+        centerWindowOnCurrentScreen(window)
+        window.isReleasedWhenClosed = false
+        let delegate = SettingsWindowDelegate { [weak self] in
+            self?.settingsWindow = nil
+        }
+        objc_setAssociatedObject(window, "delegate_owner", delegate, .OBJC_ASSOCIATION_RETAIN)
+        window.delegate = delegate
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
+    }
+
     func openHeatmap() {
         guard let s = cli.profileURLString, let url = URL(string: s) else { return }
         NSWorkspace.shared.open(url)
     }
 
     func quit() { NSApplication.shared.terminate(nil) }
+
+    private func centerWindowOnCurrentScreen(_ window: NSWindow) {
+        let mouseLocation = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main
+
+        guard let visibleFrame = screen?.visibleFrame else {
+            window.center()
+            return
+        }
+
+        let size = window.frame.size
+        let origin = NSPoint(
+            x: visibleFrame.midX - size.width / 2,
+            y: visibleFrame.midY - size.height / 2
+        )
+        window.setFrameOrigin(origin)
+    }
 
     private func runAction(_ op: @escaping () async throws -> Void) {
         guard !isRefreshing else { return }
@@ -188,4 +247,10 @@ private func compactTokenString(_ value: Int) -> String {
     if n >= 1_000_000     { return String(format: "%.1fM", n / 1_000_000) }
     if n >= 1_000         { return String(format: "%.1fK", n / 1_000) }
     return "\(value)"
+}
+
+private final class SettingsWindowDelegate: NSObject, NSWindowDelegate {
+    let onClose: () -> Void
+    init(onClose: @escaping () -> Void) { self.onClose = onClose }
+    func windowWillClose(_ notification: Notification) { onClose() }
 }

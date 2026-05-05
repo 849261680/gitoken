@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @EnvironmentObject private var viewModel: MenuBarViewModel
-    @State private var showSettings = false
 
     private let levelColors: [Color] = [
         Color(red: 0.84, green: 0.87, blue: 0.90), // 0 empty
@@ -49,15 +48,38 @@ struct MenuBarContentView: View {
 
             // ── Footer
             HStack(spacing: 4) {
+                Button {
+                    viewModel.openSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                Button {
+                    viewModel.syncNow()
+                } label: {
+                    Image(systemName: "icloud.and.arrow.up")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.isRefreshing)
+                .help("同步到 GitHub")
                 Spacer()
                 if viewModel.isRefreshing {
                     ProgressView().controlSize(.mini)
                 }
-                Text("上次采集：\(viewModel.lastUpdatedSummary)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                Spacer()
+                Button {
+                    viewModel.quit()
+                } label: {
+                    Image(systemName: "power")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
         .frame(width: 300)
@@ -72,12 +94,9 @@ struct MenuBarContentView: View {
                 set: { viewModel.setScheduleEnabled($0) }
             ))
             Divider()
-            Button("设置...") { showSettings = true }
+            Button("设置...") { viewModel.openSettings() }
             Button("查看热力图", action: viewModel.openHeatmap)
             Button("退出", action: viewModel.quit)
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsSheet(viewModel: viewModel)
         }
     }
 
@@ -123,10 +142,12 @@ struct MenuBarContentView: View {
 
 // MARK: - Settings
 
-private struct SettingsSheet: View {
-    @ObservedObject var viewModel: MenuBarViewModel
+struct SettingsView: View {
+    @EnvironmentObject var viewModel: MenuBarViewModel
     @State private var selectedInterval: Int = 120
     @State private var launchAtLogin: Bool = false
+    @State private var autoSync: Bool = false
+    @State private var syncTime: Date = Date()
 
     private let intervals: [(label: String, seconds: Int)] = [
         ("1 分钟", 60),
@@ -137,10 +158,6 @@ private struct SettingsSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("设置")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.primary)
-
             HStack {
                 Text("开机自启")
                     .font(.system(size: 13))
@@ -165,12 +182,35 @@ private struct SettingsSheet: View {
                     viewModel.restartRefreshLoop()
                 }
             }
+
+            HStack {
+                Text("自动同步")
+                    .font(.system(size: 13))
+                Spacer()
+                Toggle("", isOn: $autoSync)
+                    .toggleStyle(.switch)
+                    .disabled(viewModel.isRefreshing)
+                    .onChange(of: autoSync) { viewModel.setScheduleEnabled($0) }
+            }
+
+            HStack {
+                Text("同步时间")
+                    .font(.system(size: 13))
+                Spacer()
+                DatePicker("", selection: $syncTime, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                    .disabled(viewModel.isRefreshing)
+                    .onChange(of: syncTime) { viewModel.setScheduleTime($0) }
+            }
         }
         .padding(20)
         .frame(width: 260)
         .onAppear {
             selectedInterval = viewModel.settings.refreshInterval
             launchAtLogin = viewModel.settings.launchAtLogin
+            autoSync = viewModel.scheduleInstalled
+            syncTime = viewModel.settings.syncTimeDate
         }
+        .onChange(of: viewModel.scheduleInstalled) { autoSync = $0 }
     }
 }

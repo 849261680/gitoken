@@ -99,8 +99,8 @@ struct TokenHeatCLI {
         _ = try await run(arguments: args)
     }
 
-    func installSchedule() async throws {
-        var args = ["schedule", "install", "--repo-dir", repoDir, "--binary", cliPath]
+    func installSchedule(time: String) async throws {
+        var args = ["schedule", "install", "--repo-dir", repoDir, "--binary", cliPath, "--time", time]
         if let profileRepoDir { args += ["--profile-repo-dir", profileRepoDir] }
         _ = try await run(arguments: args)
     }
