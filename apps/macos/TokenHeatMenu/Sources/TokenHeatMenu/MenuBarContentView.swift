@@ -32,11 +32,6 @@ struct MenuBarContentView: View {
             // ── 本周合计
             statRow(label: "本周合计", value: viewModel.weeklySummary, valueSize: 20)
 
-            Divider()
-
-            // ── 来源
-            statRow(label: "来源", value: viewModel.primaryProvider, valueSize: 13, valueBold: false)
-
             // ── Heatmap
             heatmapGrid
                 .frame(maxWidth: .infinity, alignment: .center)
