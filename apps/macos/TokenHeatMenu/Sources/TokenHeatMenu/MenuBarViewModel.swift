@@ -35,10 +35,12 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var isRefreshing = false
     @Published private(set) var scheduleInstalled = false
     @Published private(set) var lastError: String?
+    @Published private var countdownNow = Date()
 
     private let cli = TokenHeatCLI()
     private var didStart = false
     private var refreshTask: Task<Void, Never>?
+    private var countdownTask: Task<Void, Never>?
     var settings = SettingsStore()
 
     var menuTitle: String {
@@ -53,11 +55,23 @@ final class MenuBarViewModel: ObservableObject {
         weeklyTokens == 0 ? "暂无数据" : compactTokenString(weeklyTokens)
     }
 
+    var nextSyncSummary: String? {
+        guard scheduleInstalled else { return nil }
+        let interval = max(settings.syncInterval, 1)
+        let scheduledAt = settings.syncScheduledAt > 0
+            ? Date(timeIntervalSince1970: settings.syncScheduledAt)
+            : Date()
+        let elapsed = max(0, countdownNow.timeIntervalSince(scheduledAt))
+        let remaining = interval - (Int(elapsed) % interval)
+        return "下次同步：\(durationString(remaining))"
+    }
+
     func start() {
         guard !didStart else { return }
         didStart = true
         refresh()
         startRefreshLoop()
+        startCountdownLoop()
     }
 
     func restartRefreshLoop() {
@@ -71,6 +85,15 @@ final class MenuBarViewModel: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(interval))
                 self?.refresh()
+            }
+        }
+    }
+
+    private func startCountdownLoop() {
+        countdownTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                self?.countdownNow = Date()
             }
         }
     }
@@ -139,8 +162,14 @@ final class MenuBarViewModel: ObservableObject {
         lastError = nil
         Task {
             do {
-                if enabled { try await cli.installSchedule(time: settings.syncTimeString) }
-                else        { try await cli.removeSchedule() }
+                if enabled {
+                    try await cli.installSchedule(interval: settings.syncInterval)
+                    settings.syncScheduledAt = Date().timeIntervalSince1970
+                    countdownNow = Date()
+                } else {
+                    try await cli.removeSchedule()
+                    settings.syncScheduledAt = 0
+                }
                 isRefreshing = false
                 refresh()
             } catch {
@@ -151,14 +180,16 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
-    func setScheduleTime(_ date: Date) {
-        settings.updateSyncTime(date)
+    func setScheduleInterval(_ interval: Int) {
+        settings.syncInterval = interval
         guard scheduleInstalled, !isRefreshing else { return }
         isRefreshing = true
         lastError = nil
         Task {
             do {
-                try await cli.installSchedule(time: settings.syncTimeString)
+                try await cli.installSchedule(interval: settings.syncInterval)
+                settings.syncScheduledAt = Date().timeIntervalSince1970
+                countdownNow = Date()
                 isRefreshing = false
                 refresh()
             } catch {
@@ -247,6 +278,14 @@ private func compactTokenString(_ value: Int) -> String {
     if n >= 1_000_000     { return String(format: "%.1fM", n / 1_000_000) }
     if n >= 1_000         { return String(format: "%.1fK", n / 1_000) }
     return "\(value)"
+}
+
+private func durationString(_ seconds: Int) -> String {
+    let seconds = max(seconds, 0)
+    let hours = seconds / 3600
+    let minutes = (seconds % 3600) / 60
+    let remainingSeconds = seconds % 60
+    return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
 }
 
 private final class SettingsWindowDelegate: NSObject, NSWindowDelegate {

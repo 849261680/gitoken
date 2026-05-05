@@ -221,7 +221,7 @@ Usage:
   tokenheat run daily [--repo-dir DIR] [--profile-repo-dir DIR] [--days N] [--db PATH]
   tokenheat sync github [--days N] [--output-dir DIR] [--repo-dir DIR] [--db PATH]
   tokenheat sync github [--profile-repo-dir DIR]
-  tokenheat schedule install [--time HH:MM] [--repo-dir DIR] [--profile-repo-dir DIR]
+  tokenheat schedule install [--time HH:MM] [--interval SECONDS] [--repo-dir DIR] [--profile-repo-dir DIR]
   tokenheat schedule status
   tokenheat schedule remove`
 }

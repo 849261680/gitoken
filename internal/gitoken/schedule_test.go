@@ -24,10 +24,11 @@ func TestParseScheduleTimeRejectsInvalid(t *testing.T) {
 }
 
 func TestBuildLaunchAgentPlist(t *testing.T) {
-	plist := buildLaunchAgentPlist(0, 5, []string{"/tmp/tokenheat", "run", "daily"}, "/tmp/repo")
+	plist := buildLaunchAgentPlist(scheduleTrigger{Hour: 0, Minute: 5}, []string{"/tmp/tokenheat", "run", "daily"}, "/tmp/repo")
 	for _, needle := range []string{
 		"<string>com.tokenheat.daily-sync</string>",
 		"<string>/tmp/tokenheat</string>",
+		"<key>StartCalendarInterval</key>",
 		"<integer>0</integer>",
 		"<integer>5</integer>",
 		"<string>/tmp/repo</string>",
@@ -35,5 +36,20 @@ func TestBuildLaunchAgentPlist(t *testing.T) {
 		if !strings.Contains(plist, needle) {
 			t.Fatalf("plist missing %q", needle)
 		}
+	}
+}
+
+func TestBuildLaunchAgentPlistWithInterval(t *testing.T) {
+	plist := buildLaunchAgentPlist(scheduleTrigger{Interval: 3600}, []string{"/tmp/tokenheat", "run", "daily"}, "/tmp/repo")
+	for _, needle := range []string{
+		"<key>StartInterval</key>",
+		"<integer>3600</integer>",
+	} {
+		if !strings.Contains(plist, needle) {
+			t.Fatalf("plist missing %q", needle)
+		}
+	}
+	if strings.Contains(plist, "StartCalendarInterval") {
+		t.Fatal("interval plist should not include StartCalendarInterval")
 	}
 }

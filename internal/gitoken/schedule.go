@@ -118,6 +118,7 @@ func runSchedule(args []string) error {
 
 type scheduleInstallOptions struct {
 	Time           string
+	Interval       int
 	BinaryPath     string
 	RepoDir        string
 	ProfileRepoDir string
@@ -142,9 +143,13 @@ func runScheduleInstall(args []string) error {
 		return err
 	}
 
-	hour, minute, err := parseScheduleTime(opts.Time)
-	if err != nil {
-		return err
+	hour, minute := 0, 0
+	if opts.Interval == 0 {
+		var err error
+		hour, minute, err = parseScheduleTime(opts.Time)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := os.MkdirAll(filepath.Dir(launchAgentPath()), 0o755); err != nil {
@@ -154,7 +159,7 @@ func runScheduleInstall(args []string) error {
 		return fmt.Errorf("create log directory: %w", err)
 	}
 
-	plist := buildLaunchAgentPlist(hour, minute, launchAgentProgramArgs(opts), opts.RepoDir)
+	plist := buildLaunchAgentPlist(scheduleTrigger{Hour: hour, Minute: minute, Interval: opts.Interval}, launchAgentProgramArgs(opts), opts.RepoDir)
 	if err := os.WriteFile(launchAgentPath(), []byte(plist), 0o644); err != nil {
 		return fmt.Errorf("write launch agent plist: %w", err)
 	}
@@ -164,7 +169,11 @@ func runScheduleInstall(args []string) error {
 		return fmt.Errorf("load launch agent: %w", err)
 	}
 
-	fmt.Printf("installed daily schedule: %s at %02d:%02d\n", launchAgentPath(), hour, minute)
+	if opts.Interval > 0 {
+		fmt.Printf("installed sync schedule: %s every %d seconds\n", launchAgentPath(), opts.Interval)
+	} else {
+		fmt.Printf("installed daily schedule: %s at %02d:%02d\n", launchAgentPath(), hour, minute)
+	}
 	fmt.Printf("launch label: %s\n", launchAgentLabel)
 	return nil
 }
@@ -258,6 +267,7 @@ func parseScheduleInstallOptions(args []string) (scheduleInstallOptions, error) 
 
 	fs := newFlagSet("schedule install")
 	timeArg := fs.String("time", opts.Time, "daily local time in HH:MM")
+	intervalArg := fs.Int("interval", 0, "sync interval in seconds; overrides --time when set")
 	binaryPathArg := fs.String("binary", opts.BinaryPath, "tokenheat binary path")
 	repoDirArg := fs.String("repo-dir", opts.RepoDir, "git repository directory")
 	profileRepoDirArg := fs.String("profile-repo-dir", "", "optional GitHub profile repository directory")
@@ -276,11 +286,15 @@ func parseScheduleInstallOptions(args []string) (scheduleInstallOptions, error) 
 	if *daysArg <= 0 {
 		return scheduleInstallOptions{}, fmt.Errorf("--days must be positive")
 	}
+	if *intervalArg < 0 {
+		return scheduleInstallOptions{}, fmt.Errorf("--interval must be non-negative")
+	}
 	if _, err := parseProviders(*providerArg); err != nil {
 		return scheduleInstallOptions{}, err
 	}
 
 	opts.Time = *timeArg
+	opts.Interval = *intervalArg
 	opts.BinaryPath, err = filepath.Abs(*binaryPathArg)
 	if err != nil {
 		return scheduleInstallOptions{}, err
@@ -352,7 +366,13 @@ func launchAgentProgramArgs(opts scheduleInstallOptions) []string {
 	return args
 }
 
-func buildLaunchAgentPlist(hour, minute int, programArgs []string, workingDir string) string {
+type scheduleTrigger struct {
+	Hour     int
+	Minute   int
+	Interval int
+}
+
+func buildLaunchAgentPlist(trigger scheduleTrigger, programArgs []string, workingDir string) string {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	b.WriteString(`<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">` + "\n")
@@ -368,13 +388,18 @@ func buildLaunchAgentPlist(hour, minute int, programArgs []string, workingDir st
 	b.WriteString("  </array>\n")
 	b.WriteString("  <key>WorkingDirectory</key>\n")
 	b.WriteString("  <string>" + xmlEscape(workingDir) + "</string>\n")
-	b.WriteString("  <key>StartCalendarInterval</key>\n")
-	b.WriteString("  <dict>\n")
-	b.WriteString("    <key>Hour</key>\n")
-	b.WriteString("    <integer>" + strconv.Itoa(hour) + "</integer>\n")
-	b.WriteString("    <key>Minute</key>\n")
-	b.WriteString("    <integer>" + strconv.Itoa(minute) + "</integer>\n")
-	b.WriteString("  </dict>\n")
+	if trigger.Interval > 0 {
+		b.WriteString("  <key>StartInterval</key>\n")
+		b.WriteString("  <integer>" + strconv.Itoa(trigger.Interval) + "</integer>\n")
+	} else {
+		b.WriteString("  <key>StartCalendarInterval</key>\n")
+		b.WriteString("  <dict>\n")
+		b.WriteString("    <key>Hour</key>\n")
+		b.WriteString("    <integer>" + strconv.Itoa(trigger.Hour) + "</integer>\n")
+		b.WriteString("    <key>Minute</key>\n")
+		b.WriteString("    <integer>" + strconv.Itoa(trigger.Minute) + "</integer>\n")
+		b.WriteString("  </dict>\n")
+	}
 	b.WriteString("  <key>StandardOutPath</key>\n")
 	b.WriteString("  <string>" + xmlEscape(filepath.Join(scheduleLogDir(), "scheduler.out.log")) + "</string>\n")
 	b.WriteString("  <key>StandardErrorPath</key>\n")
