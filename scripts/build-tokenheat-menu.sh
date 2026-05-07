@@ -9,10 +9,10 @@ RESOURCES_DIR="$APP_DIR/Contents/Resources"
 INFO_PLIST="$APP_DIR/Contents/Info.plist"
 CLI_BINARY="$ROOT_DIR/tokenheat"
 ICON_FILE="$RESOURCES_DIR/TokenHeat.icns"
-PROFILE_REPO_DIR_DEFAULT="$ROOT_DIR/../849261680"
-PROFILE_REPO_DIR="${PROFILE_REPO_DIR:-$PROFILE_REPO_DIR_DEFAULT}"
+GITHUB_USER="$(git config --global github.user 2>/dev/null || echo "")"
+PROFILE_REPO_DIR="${PROFILE_REPO_DIR:-}"
 PROJECT_URL="${PROJECT_URL:-https://github.com/849261680/token-heatmap}"
-PROFILE_URL="${PROFILE_URL:-https://github.com/849261680}"
+PROFILE_URL="${PROFILE_URL:-${GITHUB_USER:+https://github.com/$GITHUB_USER}}"
 
 if ! xcodebuild -version >/dev/null 2>&1; then
   echo "Full Xcode is required to build the macOS menu app." >&2

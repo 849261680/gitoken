@@ -13,6 +13,98 @@ struct MenuBarContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if viewModel.needsSetup {
+                setupView
+            } else {
+                mainView
+            }
+        }
+        .frame(width: 300)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .task { viewModel.start() }
+        .contextMenu {
+            Button("刷新", action: viewModel.refresh)
+                .disabled(viewModel.needsSetup)
+            Button("同步", action: viewModel.syncNow)
+                .disabled(viewModel.needsSetup)
+            Divider()
+            Toggle("每日自动同步到 GitHub", isOn: Binding(
+                get: { viewModel.scheduleInstalled },
+                set: { viewModel.setScheduleEnabled($0) }
+            ))
+            .disabled(viewModel.needsSetup)
+            Divider()
+            Button("重新设置...") { viewModel.runSetup() }
+            Button("设置...") { viewModel.openSettings() }
+            Button("查看热力图", action: viewModel.openHeatmap)
+            Button("退出", action: viewModel.quit)
+        }
+    }
+
+    private var setupView: some View {
+        VStack(spacing: 12) {
+            Text("欢迎使用 Token Heatmap")
+                .font(.system(size: 15, weight: .semibold))
+                .padding(.top, 20)
+
+            Text("自动追踪 AI 编程工具使用量\n生成 GitHub 风格热力图")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button {
+                viewModel.runSetup()
+            } label: {
+                HStack(spacing: 6) {
+                    if viewModel.isRefreshing {
+                        ProgressView().controlSize(.mini)
+                    }
+                    Text("开始设置")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isRefreshing)
+            .padding(.horizontal, 40)
+
+            if let err = viewModel.lastError {
+                Text(err)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+            }
+
+            Divider().padding(.top, 8)
+
+            HStack(spacing: 4) {
+                Button {
+                    viewModel.openSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                Button {
+                    viewModel.quit()
+                } label: {
+                    Image(systemName: "power")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+    }
+
+    private var mainView: some View {
+        VStack(alignment: .leading, spacing: 0) {
 
             // ── Header label
             Text("TOKEN HEATMAP")
@@ -83,22 +175,6 @@ struct MenuBarContentView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-        }
-        .frame(width: 300)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .task { viewModel.start() }
-        .contextMenu {
-            Button("刷新", action: viewModel.refresh)
-            Button("同步", action: viewModel.syncNow)
-            Divider()
-            Toggle("每日自动同步到 GitHub", isOn: Binding(
-                get: { viewModel.scheduleInstalled },
-                set: { viewModel.setScheduleEnabled($0) }
-            ))
-            Divider()
-            Button("设置...") { viewModel.openSettings() }
-            Button("查看热力图", action: viewModel.openHeatmap)
-            Button("退出", action: viewModel.quit)
         }
     }
 

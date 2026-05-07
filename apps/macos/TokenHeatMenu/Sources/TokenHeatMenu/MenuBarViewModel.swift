@@ -35,6 +35,7 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var isRefreshing = false
     @Published private(set) var scheduleInstalled = false
     @Published private(set) var lastError: String?
+    @Published private(set) var needsSetup = false
     @Published private var countdownNow = Date()
 
     private let cli = TokenHeatCLI()
@@ -69,9 +70,20 @@ final class MenuBarViewModel: ObservableObject {
     func start() {
         guard !didStart else { return }
         didStart = true
+
+        needsSetup = !cli.configExists()
+        if needsSetup { return }
+
         refresh()
         startRefreshLoop()
         startCountdownLoop()
+    }
+
+    func runSetup() {
+        runAction {
+            try await self.cli.runInit()
+            self.needsSetup = false
+        }
     }
 
     func restartRefreshLoop() {

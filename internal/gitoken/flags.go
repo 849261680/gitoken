@@ -91,9 +91,29 @@ func parseSyncGitHubOptions(args []string) (syncOptions, error) {
 	opts.ProfileAsset = *profileAsset
 	opts.Generate.DBPath = *dbPath
 	opts.Generate.Days = *days
-	opts.Generate.OutputDir = filepath.Join(opts.RepoDir, *outputDir)
+	opts.Generate.OutputDir = resolveOutputDir(opts.RepoDir, *outputDir)
 	opts.Generate.Now = time.Now()
+
+	if opts.ProfileRepoDir == "" {
+		if cfg, err := LoadConfig(); err == nil && cfg.ProfileRepoDir != "" {
+			opts.ProfileRepoDir = cfg.ProfileRepoDir
+		}
+	}
 	return opts, nil
+}
+
+// resolveOutputDir returns the artifact output directory. If repoDir is a git
+// repository the output goes under repoDir (for project sync); otherwise it
+// goes under ~/.tokenheat/output/ so artifacts are always generated.
+func resolveOutputDir(repoDir, outputRel string) string {
+	if isGitRepo(repoDir) {
+		return filepath.Join(repoDir, outputRel)
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(repoDir, outputRel)
+	}
+	return filepath.Join(home, ".tokenheat", "output")
 }
 
 func timeNow() time.Time {

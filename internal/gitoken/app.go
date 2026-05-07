@@ -34,6 +34,10 @@ func Run(args []string) error {
 		return runGenerate(args[1:])
 	case "run":
 		return runRun(args[1:])
+	case "init":
+		return runInit(args[1:])
+	case "config":
+		return runConfig(args[1:])
 	case "sync":
 		return runSync(args[1:])
 	case "schedule":
@@ -214,6 +218,9 @@ func usageText() string {
 	return `tokenheat
 
 Usage:
+  tokenheat init [--username USER] [--no-profile] [--schedule] [--repo-dir DIR]
+  tokenheat config show
+  tokenheat config set <key> <value>
   tokenheat collect [--provider all|codex|claude|opencode] [--db PATH]
   tokenheat report today [--db PATH]
   tokenheat report daily [--days N] [--db PATH]

@@ -51,6 +51,7 @@ enum TokenHeatCLIError: LocalizedError {
 struct TokenHeatCLI {
     private let cliPath: String
     private let repoDir: String
+    private let validRepoDir: String
     private let profileRepoDir: String?
     let profileURLString: String?
     let projectURLString: String?
@@ -63,11 +64,40 @@ struct TokenHeatCLI {
             self.cliPath = bundle.object(forInfoDictionaryKey: "TokenHeatCLIPath") as? String
                 ?? "/usr/local/bin/tokenheat"
         }
-        self.repoDir = bundle.object(forInfoDictionaryKey: "TokenHeatRepoDir") as? String
+
+        let rawRepoDir = bundle.object(forInfoDictionaryKey: "TokenHeatRepoDir") as? String
             ?? FileManager.default.currentDirectoryPath
-        self.profileRepoDir = bundle.object(forInfoDictionaryKey: "TokenHeatProfileRepoDir") as? String
-        self.profileURLString  = bundle.object(forInfoDictionaryKey: "TokenHeatProfileURL") as? String
-        self.projectURLString  = bundle.object(forInfoDictionaryKey: "TokenHeatProjectURL") as? String
+        self.repoDir = rawRepoDir
+
+        // Fallback to a user-local directory when the hardcoded path (from
+        // another machine's build) does not exist on this machine.
+        if FileManager.default.fileExists(atPath: rawRepoDir) {
+            self.validRepoDir = rawRepoDir
+        } else {
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            let fallback = home.appendingPathComponent(".tokenheat").path
+            self.validRepoDir = fallback
+        }
+
+        let rawProfileDir = bundle.object(forInfoDictionaryKey: "TokenHeatProfileRepoDir") as? String
+        self.profileRepoDir = rawProfileDir.flatMap { $0.isEmpty ? nil : $0 }
+
+        let rawProfileURL = bundle.object(forInfoDictionaryKey: "TokenHeatProfileURL") as? String
+        self.profileURLString = rawProfileURL.flatMap { $0.isEmpty ? nil : $0 }
+
+        self.projectURLString = bundle.object(forInfoDictionaryKey: "TokenHeatProjectURL") as? String
+    }
+
+    func runInit() async throws {
+        var args = ["init"]
+        if let profileRepoDir { args += ["--profile-repo-dir", profileRepoDir] }
+        _ = try await run(arguments: args)
+    }
+
+    func configExists() -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let configPath = home.appendingPathComponent(".tokenheat/config.json").path
+        return FileManager.default.fileExists(atPath: configPath)
     }
 
     func collect() async throws {
@@ -86,21 +116,29 @@ struct TokenHeatCLI {
     }
 
     func usageReport() async throws -> UsageReport {
-        let url = URL(fileURLWithPath: repoDir)
-            .appendingPathComponent("docs")
-            .appendingPathComponent("usage.json")
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(UsageReport.self, from: data)
+        // Try the project repo layout first, then the user-local fallback.
+        let candidates = [
+            URL(fileURLWithPath: validRepoDir).appendingPathComponent("docs/usage.json"),
+            FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent(".tokenheat/output/usage.json"),
+        ]
+        for url in candidates {
+            if FileManager.default.fileExists(atPath: url.path) {
+                let data = try Data(contentsOf: url)
+                return try JSONDecoder().decode(UsageReport.self, from: data)
+            }
+        }
+        throw TokenHeatCLIError.invalidResponse
     }
 
     func runDaily() async throws {
-        var args = ["run", "daily", "--repo-dir", repoDir]
+        var args = ["run", "daily", "--repo-dir", validRepoDir]
         if let profileRepoDir { args += ["--profile-repo-dir", profileRepoDir] }
         _ = try await run(arguments: args)
     }
 
     func installSchedule(interval: Int) async throws {
-        var args = ["schedule", "install", "--repo-dir", repoDir, "--binary", cliPath, "--interval", "\(interval)"]
+        var args = ["schedule", "install", "--repo-dir", validRepoDir, "--binary", cliPath, "--interval", "\(interval)"]
         if let profileRepoDir { args += ["--profile-repo-dir", profileRepoDir] }
         _ = try await run(arguments: args)
     }
@@ -122,7 +160,7 @@ struct TokenHeatCLI {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: cliPath)
             process.arguments = arguments
-            process.currentDirectoryURL = URL(fileURLWithPath: repoDir)
+            process.currentDirectoryURL = URL(fileURLWithPath: validRepoDir)
 
             let stdout = Pipe()
             let stderr = Pipe()

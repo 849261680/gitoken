@@ -95,8 +95,14 @@ func parseDailyOptions(args []string) (syncOptions, []model.Provider, error) {
 	opts.ProfileAsset = *profileAsset
 	opts.Generate.DBPath = *dbPath
 	opts.Generate.Days = *days
-	opts.Generate.OutputDir = filepath.Join(opts.RepoDir, *outputDir)
+	opts.Generate.OutputDir = resolveOutputDir(opts.RepoDir, *outputDir)
 	opts.Generate.Now = time.Now()
+
+	if opts.ProfileRepoDir == "" {
+		if cfg, err := LoadConfig(); err == nil && cfg.ProfileRepoDir != "" {
+			opts.ProfileRepoDir = cfg.ProfileRepoDir
+		}
+	}
 	return opts, providers, nil
 }
 
@@ -319,6 +325,12 @@ func parseScheduleInstallOptions(args []string) (scheduleInstallOptions, error) 
 	opts.ProfileBranch = *profileBranchArg
 	opts.ProfileAsset = *profileAssetArg
 	opts.Provider = *providerArg
+
+	if opts.ProfileRepoDir == "" {
+		if cfg, err := LoadConfig(); err == nil && cfg.ProfileRepoDir != "" {
+			opts.ProfileRepoDir = cfg.ProfileRepoDir
+		}
+	}
 	return opts, nil
 }
 

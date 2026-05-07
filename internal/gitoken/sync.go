@@ -64,6 +64,9 @@ func generateArtifacts(opts generateOptions) error {
 
 	jsonPath := filepath.Join(opts.OutputDir, "usage.json")
 	svgPath := filepath.Join(opts.OutputDir, "heatmap.svg")
+	if err := os.MkdirAll(opts.OutputDir, 0o755); err != nil {
+		return err
+	}
 	if err := exporter.WriteUsageJSON(jsonPath, export); err != nil {
 		return err
 	}
@@ -113,6 +116,25 @@ func syncGitHub(opts syncOptions) error {
 		return err
 	}
 
+	// Profile sync is the primary flow — runs first, works for everyone.
+	if opts.ProfileRepoDir != "" {
+		if err := syncProfileHeatmap(opts, filepath.Join(opts.Generate.OutputDir, "heatmap.svg")); err != nil {
+			return fmt.Errorf("profile sync: %w", err)
+		}
+	}
+
+	// Project repo sync is optional — only for users who own a fork of token-heatmap.
+	if !isGitRepo(opts.RepoDir) {
+		fmt.Println("skipping project repo sync (not a git repository)")
+		return nil
+	}
+	if err := syncProjectRepo(opts); err != nil {
+		fmt.Printf("project repo sync skipped: %v\n", err)
+	}
+	return nil
+}
+
+func syncProjectRepo(opts syncOptions) error {
 	branch := opts.Branch
 	if branch == "" {
 		current, err := gitOutput(opts.RepoDir, "branch", "--show-current")
@@ -139,24 +161,25 @@ func syncGitHub(opts syncOptions) error {
 	}
 	if !changed {
 		fmt.Println("no export changes to sync")
-	} else {
-		commitMessage := fmt.Sprintf("Update token usage for %s", opts.Generate.Now.In(time.Local).Format("2006-01-02"))
-		if err := gitRun(opts.RepoDir, "commit", "-m", commitMessage); err != nil {
-			return err
-		}
-		if err := gitRun(opts.RepoDir, "push", opts.Remote, branch); err != nil {
-			return err
-		}
-
-		fmt.Printf("synced %s to %s/%s\n", outputRel, opts.Remote, branch)
+		return nil
 	}
 
-	if opts.ProfileRepoDir != "" {
-		if err := syncProfileHeatmap(opts, filepath.Join(opts.Generate.OutputDir, "heatmap.svg")); err != nil {
-			return err
-		}
+	commitMessage := fmt.Sprintf("Update token usage for %s", opts.Generate.Now.In(time.Local).Format("2006-01-02"))
+	if err := gitRun(opts.RepoDir, "commit", "-m", commitMessage); err != nil {
+		return err
 	}
+	if err := gitRun(opts.RepoDir, "push", opts.Remote, branch); err != nil {
+		return err
+	}
+
+	fmt.Printf("synced %s to %s/%s\n", outputRel, opts.Remote, branch)
 	return nil
+}
+
+func isGitRepo(dir string) bool {
+	cmd := exec.Command("git", "rev-parse", "--git-dir")
+	cmd.Dir = dir
+	return cmd.Run() == nil
 }
 
 func syncProfileHeatmap(opts syncOptions, heatmapPath string) error {
@@ -213,22 +236,43 @@ func touchProfileReadme(repoDir string, now time.Time) error {
 	path := filepath.Join(repoDir, "README.md")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("read profile README: %w", err)
+		if os.IsNotExist(err) {
+			data = []byte{}
+		} else {
+			return fmt.Errorf("read profile README: %w", err)
+		}
 	}
 
+	const heatmapImg = "![Token Heatmap](heatmap.svg)"
+	const heatmapHeading = "## Token Heatmap"
 	const prefix = "<!-- tokenheat-sync:"
 	stamp := fmt.Sprintf("<!-- tokenheat-sync: %s -->", now.In(time.Local).Format(time.RFC3339))
 	content := string(data)
+
+	heatmapBlock := heatmapHeading + "\n\n" + heatmapImg
+
+	if !strings.Contains(content, heatmapImg) {
+		if content == "" {
+			content = heatmapBlock + "\n\n" + stamp + "\n"
+		} else {
+			if !strings.HasSuffix(content, "\n") {
+				content += "\n"
+			}
+			content += "\n" + heatmapBlock + "\n"
+		}
+	}
 
 	if idx := strings.Index(content, prefix); idx >= 0 {
 		if end := strings.Index(content[idx:], "-->"); end >= 0 {
 			content = content[:idx] + stamp + content[idx+end+3:]
 		}
 	} else {
-		if !strings.HasSuffix(content, "\n") {
-			content += "\n"
+		if !strings.Contains(content, stamp) {
+			if !strings.HasSuffix(content, "\n") {
+				content += "\n"
+			}
+			content += "\n" + stamp + "\n"
 		}
-		content += "\n" + stamp + "\n"
 	}
 
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
