@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-08T00:48:03+08:00",
+  "generated_at": "2026-05-08T06:05:00+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
@@ -1727,17 +1727,17 @@
     },
     {
       "day": "2026-04-07",
-      "total_tokens": 25182124,
+      "total_tokens": 24928342,
       "providers": {
-        "claude": 22747808,
+        "claude": 22494026,
         "codex": 2434316
       }
     },
     {
       "day": "2026-04-08",
-      "total_tokens": 127051894,
+      "total_tokens": 125919939,
       "providers": {
-        "claude": 21255302,
+        "claude": 20123347,
         "codex": 105796592
       }
     },
@@ -1962,10 +1962,10 @@
     },
     {
       "day": "2026-05-08",
-      "total_tokens": 25192276,
+      "total_tokens": 44093080,
       "providers": {
-        "claude": 10136121,
-        "codex": 15056155
+        "claude": 17579851,
+        "codex": 26513229
       }
     }
   ]
