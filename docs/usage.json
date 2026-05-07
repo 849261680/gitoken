@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-08T00:38:37+08:00",
+  "generated_at": "2026-05-08T00:48:03+08:00",
   "timezone": "Local",
   "days": 365,
   "rows": [
@@ -1962,9 +1962,9 @@
     },
     {
       "day": "2026-05-08",
-      "total_tokens": 24024268,
+      "total_tokens": 25192276,
       "providers": {
-        "claude": 8968113,
+        "claude": 10136121,
         "codex": 15056155
       }
     }
