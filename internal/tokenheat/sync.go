@@ -1,4 +1,4 @@
-package gitoken
+package tokenheat
 
 import (
 	"bytes"
