@@ -1,89 +1,65 @@
-# Agent 指令
+# 开发规则
 
-本项目使用 **bd** (beads) 进行任务追踪。运行 `bd prime` 获取完整工作流上下文。
+- 测试驱动开发，在构建功能时，先打造一个微小的、端到端的功能切片，寻求反馈，然后在此基础上逐步扩展。 曳光弹的概念源自《程序员修炼之道》。在构建系统时，你希望编写能尽快获得反馈的代码。曳光弹是贯穿系统所有层的小功能切片，让你能尽早测试和验证方法。这有助于识别潜在问题，并确保在投入大量开发时间之前，整体架构是稳健的。
 
-> **架构概述：** 任务存储在本地 Dolt 数据库（`.beads/dolt/`）；跨机器同步使用 `bd dolt push/pull`（git 兼容协议），数据存放在 git remote 的 `refs/dolt/data` 下 —— 与 `refs/heads/*` 中的代码分离。`.beads/issues.jsonl` 是被动导出，不是传输协议。
->
-> 详见 [SYNC_CONCEPTS.md](https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md)（一屏概览和反模式：不要把 JSONL 当作数据源；不要在正常运行时使用 `bd import`；不要在尝试默认方案前就去找第三方 Dolt 托管）。
+- 回归是最严重的错误。新改动引入的问题必须立即修复，不得拖延。
 
-## 快速参考
+- 遇到无法解决的BUG请添加日志，获取足够的错误信息来DEBUG。
 
-```bash
-bd ready              # 查看可用任务
-bd show <id>          # 查看任务详情
-bd update <id> --claim  # 认领任务
-bd close <id>         # 完成任务
-bd dolt push          # 推送 beads 数据到远程
-```
+- 重要！做最小化改动，每次改动只做一件事，快速获取反馈。
 
-## 非交互式 Shell 命令
+- 代码嵌套不能超过3层
 
-**始终使用非交互式参数**，避免在确认提示处挂起。
+- 每一个模块和函数都要写一个简短的注释来注明其功能
 
-`cp`、`mv`、`rm` 等命令在某些系统上可能被别名为 `-i`（交互）模式，导致 agent 无限等待 y/n 输入。
+- 写简单易读的代码，复杂代码是错误的代码。如果需要大段注释才能解释一段逻辑，说明这段逻辑需要重写。
 
-**请使用以下形式：**
-```bash
-# 强制覆盖，不提示
-cp -f source dest           # 不要用: cp source dest
-mv -f source dest           # 不要用: mv source dest
-rm -f file                  # 不要用: rm file
+- 死代码和不必要的代码需要删除
 
-# 递归操作
-rm -rf directory            # 不要用: rm -r directory
-cp -rf source dest          # 不要用: cp -r source dest
-```
-
-**其他可能弹出提示的命令：**
-- `scp` - 使用 `-o BatchMode=yes`
-- `ssh` - 使用 `-o BatchMode=yes`，失败而非提示
-- `apt-get` - 使用 `-y` 参数
-- `brew` - 使用 `HOMEBREW_NO_AUTO_UPDATE=1` 环境变量
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:7510c1e2 -->
-## Beads 任务追踪器
+## Beads Issue Tracker
 
-本项目使用 **bd (beads)** 进行任务追踪。运行 `bd prime` 获取完整工作流和命令参考。
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
 
-### 快速参考
+### Quick Reference
 
 ```bash
-bd ready              # 查看可用任务
-bd show <id>          # 查看任务详情
-bd update <id> --claim  # 认领任务
-bd close <id>         # 完成任务
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
 ```
 
-### 规则
+### Rules
 
-- 所有任务追踪使用 `bd` —— 禁止使用 TodoWrite、TaskCreate 或 markdown TODO 列表
-- 运行 `bd prime` 获取详细命令参考和会话关闭协议
-- 使用 `bd remember` 存储持久知识 —— 禁止使用 MEMORY.md 文件
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
-**架构概述：** 任务存储在本地 Dolt 数据库；同步使用 git remote 的 `refs/dolt/data`；`.beads/issues.jsonl` 是被动导出。详见 https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md。
+**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
 
-## 会话结束
+## Session Completion
 
-**结束工作会话时**，必须完成以下所有步骤。工作在 `git push` 成功之前不算完成。
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
 
-**必须执行的工作流：**
+**MANDATORY WORKFLOW:**
 
-1. **为剩余工作创建任务** - 为需要后续跟进的内容创建 issue
-2. **运行质量检查**（如果代码有变动）- 测试、lint、构建
-3. **更新任务状态** - 关闭已完成的工作，更新进行中的任务
-4. **推送到远程** - 这是必须的：
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
    git push
-   git status  # 必须显示 "up to date with origin"
+   git status  # MUST show "up to date with origin"
    ```
-5. **清理** - 清除 stash，清理远程分支
-6. **验证** - 所有变更已提交且已推送
-7. **交接** - 为下一次会话提供上下文
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
 
-**关键规则：**
-- `git push` 成功之前工作不算完成
-- 绝不在推送前停止 —— 那会让工作滞留在本地
-- 绝不说"准备好就可以推送" —— 你必须自己推送
-- 如果推送失败，解决后重试直到成功
-<!-- END BEADS INTEGRATION -->
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
