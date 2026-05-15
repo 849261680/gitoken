@@ -44,6 +44,11 @@ func Open(path string) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 
+	if _, err := db.Exec(`PRAGMA busy_timeout = 5000`); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("set busy_timeout: %w", err)
+	}
+
 	store := &Store{db: db}
 	if err := store.migrate(context.Background()); err != nil {
 		_ = db.Close()
@@ -168,7 +173,12 @@ func (s *Store) migrateLegacyData(ctx context.Context, currentPath string) error
 }
 
 func (s *Store) tableCount(ctx context.Context, table string) (int, error) {
-	row := s.db.QueryRowContext(ctx, fmt.Sprintf(`SELECT COUNT(*) FROM %s`, table))
+	allowed := map[string]bool{"usage_events": true, "file_states": true}
+	if !allowed[table] {
+		return 0, fmt.Errorf("unknown table %q", table)
+	}
+	query := "SELECT COUNT(*) FROM " + table
+	row := s.db.QueryRowContext(ctx, query)
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("count table %s: %w", table, err)
